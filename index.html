@@ -26,7 +26,7 @@ html[data-theme="dark"]{
   --shadow:0 6px 24px rgba(0,0,0,.5);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;height:100%}
+html,body{margin:0;padding:0;height:100%;max-width:100%;overflow-x:hidden}
 body{
   background:var(--bg);color:var(--tx);overflow:hidden;
   font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Segoe UI,Roboto,sans-serif;
@@ -73,9 +73,11 @@ select,input[type=text]{background:var(--bg2);border:1px solid var(--line);color
 
 /* ---------- 章节/首页 ---------- */
 .page{max-width:900px;margin:0 auto;padding:22px 18px 80px}
-.topbar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10}
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10;flex-wrap:wrap}
 .topbar h1{font-size:17px;margin:0;font-weight:600}
-.tabs{display:flex;gap:18px;padding:0 18px;border-bottom:1px solid var(--line);position:sticky;top:51px;background:var(--bg);z-index:9}
+.tabs{display:flex;gap:18px;padding:0 18px;border-bottom:1px solid var(--line);position:sticky;top:51px;background:var(--bg);z-index:9;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:0 0 auto}
 .tabs button{padding:11px 0;font-size:14px;color:var(--tx2);border-bottom:2px solid transparent}
 .tabs button.on{color:var(--tx);border-color:var(--orange);font-weight:600}
 .chapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:16px}
@@ -182,6 +184,19 @@ html[data-theme="dark"] #toast{background:#16281f;color:#7fd7a6;border-color:#24
 .resnum{font-size:52px;font-weight:700;color:var(--orange);text-align:center;line-height:1.1}
 .result-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
 .result-item .yours{color:var(--wrong);text-decoration:line-through}
+@media (max-width:430px){
+  .tabs{gap:15px;padding:0 14px}
+  .tabs button{font-size:13.5px}
+  .topbar{padding:11px 14px}
+  .topbar h1{font-size:16px}
+  #btnReview{padding:5px 9px;font-size:12.5px}
+  #hdr{gap:0;padding:3px 4px;max-width:calc(100vw - 16px)}
+  #hdr .chap{font-size:12px;padding:0 6px;margin-right:2px}
+  #hdr .mode{font-size:12px;padding:4px 6px}
+  #hdr .icobtn{width:30px;height:30px}
+  .wlrow{grid-template-columns:26px 1fr auto;gap:8px}
+  .wlrow .wlmean{display:none}
+}
 @media (max-width:560px){
   #ansWord{font-size:24px}
   #typeIn,#mirror{font-size:23px}
