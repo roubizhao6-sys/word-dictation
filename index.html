@@ -5,11 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>单词听写 · 智能听写模式</title>
-<meta name="description" content="636 个手写笔记本单词 · 多义项 + 音标 + 考试标签 · 听音写词 · 逐字母智能批改 · 错词本 · 艾宾浩斯复习 · 美音英音双发音">
+<meta name="description" content="636 个手写笔记本单词 · 多种中文意思 + 音标 + 考试标签 · 听音写词 · 逐字母智能批改 · 错词本 · 艾宾浩斯复习 · 美音英音双发音">
 <meta property="og:title" content="单词听写 · 智能听写模式">
 <meta property="og:description" content="636 词 · 每词多种中文意思 · 听写/听选/看词选义 · 智能批改 · 错词本 · 记忆曲线">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://roubizhao6-sys.github.io/word-dictation/">
+<meta property="og:image" content="https://roubizhao6-sys.github.io/word-dictation/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://roubizhao6-sys.github.io/word-dictation/og-image.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="单词听写">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="og-image.png">
 <style>
 :root{
   --orange:#ff7a45; --orange-d:#f2653a; --orange-l:#fff1ea;
@@ -227,7 +237,10 @@ html[data-theme="dark"] #toast{background:#16281f;color:#7fd7a6;border-color:#24
   <div class="topbar">
     <h1>单词听写</h1>
     <span class="pill" id="homeTotal">636 词</span>
-    <button class="btn sm" style="margin-left:auto" id="btnReview">今日复习 <b id="dueNum">0</b></button>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn sm" id="btnShare">🔗 分享</button>
+      <button class="btn sm" id="btnReview">今日复习 <b id="dueNum">0</b></button>
+    </div>
   </div>
   <div class="tabs">
     <button class="on" data-tab="chap">章节</button>
@@ -1187,11 +1200,19 @@ function openHelp(){
 /* =========================================================
    事件 & 初始化
    ========================================================= */
+async function shareSite(){
+  const url='https://roubizhao6-sys.github.io/word-dictation/';
+  const data={title:'单词听写 · 智能听写模式',text:'636 个单词 · 多种中文意思 · 美音英音 · 听音写词智能批改',url};
+  if(navigator.share){ try{ await navigator.share(data); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
+  try{ await navigator.clipboard.writeText(url); showToast('链接已复制，去粘贴给同学吧'); }
+  catch(e){ prompt('复制这个链接分享：', url); }
+}
 function wire(){
   $('#btnList').onclick=()=>openWordList();
   $('#btnSet').onclick=openSettings;
   $('#btnHelp').onclick=openHelp;
   $('#btnHome').onclick=()=>{ stopAudio(); D=null; showScreen('Home'); };
+  $('#btnShare').onclick=shareSite;
   $('#btnReview').onclick=()=>{ const ids=dueList(); if(ids.length) startList(ids,'今日复习'); else alert('今天没有待复习的单词'); };
   $('#hdrMode').onclick=e=>{ e.stopPropagation(); openModeMenu(); };
   $('#spkBtn').innerHTML=ICON.spk;

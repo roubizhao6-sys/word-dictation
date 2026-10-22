@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>分享 · 单词听写</title>
+<meta property="og:title" content="单词听写 · 智能听写模式">
+<meta property="og:description" content="636 词 · 多种中文意思 · 美音英音 · 智能批改 · 错词本">
+<meta property="og:image" content="https://roubizhao6-sys.github.io/word-dictation/og-image.png">
+<style>
+:root{--o:#ff7a45;--tx:#2b2b2b;--t2:#8a8a8a;--line:#ececec}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:linear-gradient(160deg,#fff7f3,#fff 55%,#fff4ef);color:var(--tx);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",sans-serif;
+  display:flex;align-items:center;justify-content:center;padding:28px 18px}
+.card{width:100%;max-width:420px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px 22px;
+  box-shadow:0 18px 50px rgba(255,122,69,.12);text-align:center}
+.logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#ff7a45,#ff9d6e);margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(255,122,69,.32)}
+.logo svg{width:38px;height:38px}
+h1{font-size:22px;margin:0 0 6px}
+p.sub{color:var(--t2);font-size:13px;margin:0 0 18px}
+.qr{width:220px;height:220px;margin:0 auto 16px;padding:10px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.qr img{width:100%;height:100%;display:block}
+.url{font-size:12.5px;color:var(--t2);word-break:break-all;background:#faf7f5;border-radius:10px;padding:9px 10px;margin-bottom:16px}
+button{width:100%;border:none;border-radius:12px;padding:14px;font-size:15.5px;font-weight:600;font-family:inherit;cursor:pointer}
+.primary{background:var(--o);color:#fff;box-shadow:0 8px 20px rgba(255,122,69,.3)}
+.ghost{background:#f6f3f1;color:#5d5550;margin-top:10px}
+.tip{font-size:12px;color:var(--t2);margin-top:14px}
+</style></head>
+<body>
+<div class="card">
+  <div class="logo"><svg viewBox="0 0 64 64"><path d="M16 14h26a7 7 0 017 7v30H23a7 7 0 01-7-7z" fill="#fff"/><path d="M24 25h16M24 33h16M24 41h10" stroke="#ff7a45" stroke-width="3.2" stroke-linecap="round"/></svg></div>
+  <h1>单词听写 · 智能听写模式</h1>
+  <p class="sub">636 词 · 多种中文意思 · 美音英音 · 智能批改</p>
+  <div class="qr"><img src="qr.png" alt="扫码打开"></div>
+  <div class="url" id="url">https://roubizhao6-sys.github.io/word-dictation/</div>
+  <button class="primary" id="share">分享给同学</button>
+  <button class="ghost" id="copy">复制链接</button>
+  <div class="tip">手机扫码即可打开 · 学习进度各自保存在本机</div>
+</div>
+<script>
+const URL='https://roubizhao6-sys.github.io/word-dictation/';
+document.getElementById('share').onclick=async()=>{
+  const data={title:'单词听写 · 智能听写模式',text:'636 个单词 · 多种中文意思 · 美音英音 · 听音写词智能批改',url:URL};
+  if(navigator.share){ try{ await navigator.share(data); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
+  try{ await navigator.clipboard.writeText(URL); alert('链接已复制，去粘贴分享吧'); }catch(e){ prompt('复制链接：',URL); }
+};
+document.getElementById('copy').onclick=async()=>{
+  try{ await navigator.clipboard.writeText(URL); document.getElementById('copy').textContent='已复制 ✓'; setTimeout(()=>document.getElementById('copy').textContent='复制链接',1600); }
+  catch(e){ prompt('复制链接：',URL); }
+};
+</script>
+</body></html>
