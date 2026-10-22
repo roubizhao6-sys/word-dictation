@@ -1,0 +1,3818 @@
+[
+ {
+  "unit": 1,
+  "word": "moisture",
+  "pos": "n.",
+  "meaning": "潮湿；水分"
+ },
+ {
+  "unit": 1,
+  "word": "procedure",
+  "pos": "n.",
+  "meaning": "程序，步骤"
+ },
+ {
+  "unit": 1,
+  "word": "rinse",
+  "pos": "v./n.",
+  "meaning": "冲洗；漂洗"
+ },
+ {
+  "unit": 1,
+  "word": "brown",
+  "pos": "v.",
+  "meaning": "变成褐色"
+ },
+ {
+  "unit": 1,
+  "word": "brow",
+  "pos": "n.",
+  "meaning": "眉毛"
+ },
+ {
+  "unit": 1,
+  "word": "stack",
+  "pos": "n./v.",
+  "meaning": "一叠，一堆；堆放"
+ },
+ {
+  "unit": 1,
+  "word": "cure",
+  "pos": "v./n.",
+  "meaning": "治愈；疗法"
+ },
+ {
+  "unit": 1,
+  "word": "immerse",
+  "pos": "v.",
+  "meaning": "沉浸，浸没"
+ },
+ {
+  "unit": 1,
+  "word": "initiate",
+  "pos": "v./n.",
+  "meaning": "开始，创始"
+ },
+ {
+  "unit": 1,
+  "word": "expose",
+  "pos": "v.",
+  "meaning": "使曝光，暴露"
+ },
+ {
+  "unit": 1,
+  "word": "gentle",
+  "pos": "adj.",
+  "meaning": "温和的"
+ },
+ {
+  "unit": 1,
+  "word": "savoury",
+  "pos": "adj.",
+  "meaning": "咸的，辛辣的"
+ },
+ {
+  "unit": 1,
+  "word": "ingredient",
+  "pos": "n.",
+  "meaning": "配料，成分"
+ },
+ {
+  "unit": 1,
+  "word": "finest",
+  "pos": "n./adj.",
+  "meaning": "最杰出代表；最好的"
+ },
+ {
+  "unit": 1,
+  "word": "enable",
+  "pos": "v.",
+  "meaning": "使能够"
+ },
+ {
+  "unit": 1,
+  "word": "quantity",
+  "pos": "n.",
+  "meaning": "数量"
+ },
+ {
+  "unit": 1,
+  "word": "insect",
+  "pos": "n.",
+  "meaning": "昆虫"
+ },
+ {
+  "unit": 1,
+  "word": "pollination",
+  "pos": "n.",
+  "meaning": "授粉"
+ },
+ {
+  "unit": 1,
+  "word": "infrequent",
+  "pos": "adj.",
+  "meaning": "罕见的"
+ },
+ {
+  "unit": 1,
+  "word": "smuggle",
+  "pos": "v.",
+  "meaning": "偷运，走私"
+ },
+ {
+  "unit": 1,
+  "word": "blossom",
+  "pos": "v./n.",
+  "meaning": "开花；花朵"
+ },
+ {
+  "unit": 1,
+  "word": "struggle",
+  "pos": "v./n.",
+  "meaning": "奋斗，挣扎"
+ },
+ {
+  "unit": 1,
+  "word": "sauce",
+  "pos": "n.",
+  "meaning": "酱汁"
+ },
+ {
+  "unit": 1,
+  "word": "spicy",
+  "pos": "adj.",
+  "meaning": "辛辣的"
+ },
+ {
+  "unit": 1,
+  "word": "character",
+  "pos": "n.",
+  "meaning": "品质，人物，特征"
+ },
+ {
+  "unit": 1,
+  "word": "tone",
+  "pos": "n.",
+  "meaning": "语气，音调"
+ },
+ {
+  "unit": 1,
+  "word": "intensive",
+  "pos": "adj.",
+  "meaning": "加强的，集中的"
+ },
+ {
+  "unit": 1,
+  "word": "oven",
+  "pos": "n.",
+  "meaning": "烤箱"
+ },
+ {
+  "unit": 1,
+  "word": "wrap",
+  "pos": "v./n.",
+  "meaning": "包裹；包装"
+ },
+ {
+  "unit": 1,
+  "word": "mat",
+  "pos": "n.",
+  "meaning": "地垫，垫子"
+ },
+ {
+  "unit": 1,
+  "word": "quality",
+  "pos": "n.",
+  "meaning": "质量，品质"
+ },
+ {
+  "unit": 1,
+  "word": "tip",
+  "pos": "n.",
+  "meaning": "尖端；小费"
+ },
+ {
+  "unit": 1,
+  "word": "crucial",
+  "pos": "adj.",
+  "meaning": "决定性的，关键的"
+ },
+ {
+  "unit": 1,
+  "word": "indigenous",
+  "pos": "adj.",
+  "meaning": "土生土长的"
+ },
+ {
+  "unit": 1,
+  "word": "sole",
+  "pos": "n./adj.",
+  "meaning": "鞋底；唯一的"
+ },
+ {
+  "unit": 1,
+  "word": "secret",
+  "pos": "n./adj.",
+  "meaning": "秘密"
+ },
+ {
+  "unit": 1,
+  "word": "exclusive",
+  "pos": "adj.",
+  "meaning": "高级的，专属的"
+ },
+ {
+  "unit": 1,
+  "word": "conquer",
+  "pos": "v.",
+  "meaning": "攻克，征服"
+ },
+ {
+  "unit": 1,
+  "word": "pod",
+  "pos": "n.",
+  "meaning": "豆荚"
+ },
+ {
+  "unit": 1,
+  "word": "flavor",
+  "pos": "n.",
+  "meaning": "味道，风味"
+ },
+ {
+  "unit": 1,
+  "word": "anxiety",
+  "pos": "n.",
+  "meaning": "焦虑"
+ },
+ {
+  "unit": 1,
+  "word": "freezer",
+  "pos": "n.",
+  "meaning": "冷藏室，冰柜"
+ },
+ {
+  "unit": 1,
+  "word": "fridge",
+  "pos": "n.",
+  "meaning": "冰箱"
+ },
+ {
+  "unit": 1,
+  "word": "scenario",
+  "pos": "n.",
+  "meaning": "情节，剧本"
+ },
+ {
+  "unit": 1,
+  "word": "impulse",
+  "pos": "n./v.",
+  "meaning": "冲动；推动"
+ },
+ {
+  "unit": 1,
+  "word": "customer",
+  "pos": "n.",
+  "meaning": "顾客"
+ },
+ {
+  "unit": 1,
+  "word": "custom",
+  "pos": "n.",
+  "meaning": "风俗，习惯"
+ },
+ {
+  "unit": 1,
+  "word": "obscure",
+  "pos": "adj.",
+  "meaning": "无名的，晦涩的"
+ },
+ {
+  "unit": 1,
+  "word": "command",
+  "pos": "n./v.",
+  "meaning": "命令"
+ },
+ {
+  "unit": 1,
+  "word": "indeed",
+  "pos": "adv.",
+  "meaning": "确实"
+ },
+ {
+  "unit": 1,
+  "word": "exposure",
+  "pos": "n.",
+  "meaning": "暴露，曝光"
+ },
+ {
+  "unit": 1,
+  "word": "dialect",
+  "pos": "n.",
+  "meaning": "方言"
+ },
+ {
+  "unit": 1,
+  "word": "commemoration",
+  "pos": "n.",
+  "meaning": "纪念"
+ },
+ {
+  "unit": 1,
+  "word": "incorrect",
+  "pos": "adj.",
+  "meaning": "错误的"
+ },
+ {
+  "unit": 1,
+  "word": "thumb",
+  "pos": "n.",
+  "meaning": "拇指"
+ },
+ {
+  "unit": 2,
+  "word": "gesture",
+  "pos": "n.",
+  "meaning": "手势，姿势"
+ },
+ {
+  "unit": 2,
+  "word": "acknowledge",
+  "pos": "v.",
+  "meaning": "承认"
+ },
+ {
+  "unit": 2,
+  "word": "academic",
+  "pos": "adj.",
+  "meaning": "学术的"
+ },
+ {
+  "unit": 2,
+  "word": "university",
+  "pos": "n.",
+  "meaning": "大学"
+ },
+ {
+  "unit": 2,
+  "word": "certain",
+  "pos": "adj.",
+  "meaning": "肯定的，确定的"
+ },
+ {
+  "unit": 2,
+  "word": "policy",
+  "pos": "n.",
+  "meaning": "政策，方针"
+ },
+ {
+  "unit": 2,
+  "word": "advocate",
+  "pos": "v./n.",
+  "meaning": "拥护，提倡"
+ },
+ {
+  "unit": 2,
+  "word": "dish",
+  "pos": "n.",
+  "meaning": "盘子；一道菜"
+ },
+ {
+  "unit": 2,
+  "word": "substance",
+  "pos": "n.",
+  "meaning": "物质"
+ },
+ {
+  "unit": 2,
+  "word": "reaction",
+  "pos": "n.",
+  "meaning": "反应"
+ },
+ {
+  "unit": 2,
+  "word": "allergic",
+  "pos": "adj.",
+  "meaning": "过敏的"
+ },
+ {
+  "unit": 2,
+  "word": "reunion",
+  "pos": "n.",
+  "meaning": "重聚"
+ },
+ {
+  "unit": 2,
+  "word": "identity",
+  "pos": "n.",
+  "meaning": "身份"
+ },
+ {
+  "unit": 2,
+  "word": "assign",
+  "pos": "v.",
+  "meaning": "分配，指派"
+ },
+ {
+  "unit": 2,
+  "word": "nut",
+  "pos": "n.",
+  "meaning": "坚果"
+ },
+ {
+  "unit": 2,
+  "word": "captain",
+  "pos": "n.",
+  "meaning": "船长，队长"
+ },
+ {
+  "unit": 2,
+  "word": "overwhelm",
+  "pos": "v.",
+  "meaning": "覆盖，打倒，淹没"
+ },
+ {
+  "unit": 2,
+  "word": "dismissive",
+  "pos": "adj.",
+  "meaning": "轻蔑的"
+ },
+ {
+  "unit": 2,
+  "word": "inspect",
+  "pos": "v.",
+  "meaning": "检查"
+ },
+ {
+  "unit": 2,
+  "word": "bilingual",
+  "pos": "adj./n.",
+  "meaning": "双语的；双语者"
+ },
+ {
+  "unit": 2,
+  "word": "alert",
+  "pos": "n./adj.",
+  "meaning": "警报；警觉的"
+ },
+ {
+  "unit": 2,
+  "word": "persistent",
+  "pos": "adj.",
+  "meaning": "持续的，执着的"
+ },
+ {
+  "unit": 2,
+  "word": "warp",
+  "pos": "v.",
+  "meaning": "弯曲"
+ },
+ {
+  "unit": 2,
+  "word": "pack",
+  "pos": "v./n.",
+  "meaning": "打包；包裹"
+ },
+ {
+  "unit": 2,
+  "word": "loose",
+  "pos": "adj.",
+  "meaning": "松的"
+ },
+ {
+  "unit": 2,
+  "word": "belt",
+  "pos": "n.",
+  "meaning": "腰带"
+ },
+ {
+  "unit": 2,
+  "word": "suitcase",
+  "pos": "n.",
+  "meaning": "手提箱"
+ },
+ {
+  "unit": 2,
+  "word": "product",
+  "pos": "n.",
+  "meaning": "产物，产品"
+ },
+ {
+  "unit": 2,
+  "word": "baggage",
+  "pos": "n.",
+  "meaning": "行李"
+ },
+ {
+  "unit": 2,
+  "word": "rival",
+  "pos": "n.",
+  "meaning": "竞争对手"
+ },
+ {
+  "unit": 2,
+  "word": "dynamic",
+  "pos": "adj.",
+  "meaning": "动态的"
+ },
+ {
+  "unit": 2,
+  "word": "revise",
+  "pos": "v.",
+  "meaning": "修订，复习"
+ },
+ {
+  "unit": 2,
+  "word": "flight",
+  "pos": "n.",
+  "meaning": "航程，飞行"
+ },
+ {
+  "unit": 2,
+  "word": "resemble",
+  "pos": "v.",
+  "meaning": "像…，类似于"
+ },
+ {
+  "unit": 2,
+  "word": "frighten",
+  "pos": "v.",
+  "meaning": "惊吓"
+ },
+ {
+  "unit": 2,
+  "word": "tidal",
+  "pos": "adj.",
+  "meaning": "有潮的"
+ },
+ {
+  "unit": 2,
+  "word": "unleash",
+  "pos": "v.",
+  "meaning": "发泄，释放"
+ },
+ {
+  "unit": 2,
+  "word": "pigment",
+  "pos": "n.",
+  "meaning": "颜料"
+ },
+ {
+  "unit": 2,
+  "word": "notion",
+  "pos": "n.",
+  "meaning": "概念"
+ },
+ {
+  "unit": 3,
+  "word": "limit",
+  "pos": "v./n.",
+  "meaning": "限制；极限"
+ },
+ {
+  "unit": 3,
+  "word": "imitate",
+  "pos": "v.",
+  "meaning": "模仿"
+ },
+ {
+  "unit": 3,
+  "word": "satellite",
+  "pos": "n.",
+  "meaning": "卫星"
+ },
+ {
+  "unit": 3,
+  "word": "paranoid",
+  "pos": "adj./n.",
+  "meaning": "妄想症的；妄想症的人"
+ },
+ {
+  "unit": 3,
+  "word": "concave",
+  "pos": "adj.",
+  "meaning": "凹的"
+ },
+ {
+  "unit": 3,
+  "word": "concavity",
+  "pos": "n.",
+  "meaning": "凹陷"
+ },
+ {
+  "unit": 3,
+  "word": "domain",
+  "pos": "n.",
+  "meaning": "领域，定义域"
+ },
+ {
+  "unit": 3,
+  "word": "donate",
+  "pos": "v.",
+  "meaning": "捐赠"
+ },
+ {
+  "unit": 3,
+  "word": "dorm",
+  "pos": "n.",
+  "meaning": "学生宿舍"
+ },
+ {
+  "unit": 3,
+  "word": "automatic",
+  "pos": "adj.",
+  "meaning": "自动的"
+ },
+ {
+  "unit": 3,
+  "word": "persuade",
+  "pos": "v.",
+  "meaning": "说服"
+ },
+ {
+  "unit": 3,
+  "word": "highlight",
+  "pos": "v./n.",
+  "meaning": "引起注意，突出；亮点"
+ },
+ {
+  "unit": 3,
+  "word": "credit",
+  "pos": "n.",
+  "meaning": "赞扬；信用"
+ },
+ {
+  "unit": 3,
+  "word": "honour",
+  "pos": "n.",
+  "meaning": "荣誉"
+ },
+ {
+  "unit": 3,
+  "word": "dormitory",
+  "pos": "n.",
+  "meaning": "宿舍"
+ },
+ {
+  "unit": 3,
+  "word": "brand",
+  "pos": "n.",
+  "meaning": "商标，火把"
+ },
+ {
+  "unit": 3,
+  "word": "introductory",
+  "pos": "adj.",
+  "meaning": "引导的，介绍的"
+ },
+ {
+  "unit": 3,
+  "word": "obstacle",
+  "pos": "n.",
+  "meaning": "障碍"
+ },
+ {
+  "unit": 3,
+  "word": "contribution",
+  "pos": "n.",
+  "meaning": "贡献"
+ },
+ {
+  "unit": 3,
+  "word": "collaboration",
+  "pos": "n.",
+  "meaning": "合作"
+ },
+ {
+  "unit": 3,
+  "word": "distinguish",
+  "pos": "v.",
+  "meaning": "区分"
+ },
+ {
+  "unit": 3,
+  "word": "nutrition",
+  "pos": "n.",
+  "meaning": "营养"
+ },
+ {
+  "unit": 3,
+  "word": "exact",
+  "pos": "adj.",
+  "meaning": "精确的"
+ },
+ {
+  "unit": 3,
+  "word": "within",
+  "pos": "prep.",
+  "meaning": "在…里"
+ },
+ {
+  "unit": 3,
+  "word": "distinctive",
+  "pos": "adj.",
+  "meaning": "独特的"
+ },
+ {
+  "unit": 3,
+  "word": "shaggy",
+  "pos": "adj.",
+  "meaning": "蓬乱的"
+ },
+ {
+  "unit": 3,
+  "word": "mane",
+  "pos": "n.",
+  "meaning": "鬃毛"
+ },
+ {
+  "unit": 3,
+  "word": "pale",
+  "pos": "adj.",
+  "meaning": "浅浅的，苍白的"
+ },
+ {
+  "unit": 3,
+  "word": "endangered",
+  "pos": "adj.",
+  "meaning": "濒危的"
+ },
+ {
+  "unit": 3,
+  "word": "dialogue",
+  "pos": "n.",
+  "meaning": "对话"
+ },
+ {
+  "unit": 3,
+  "word": "mentor",
+  "pos": "n.",
+  "meaning": "导师"
+ },
+ {
+  "unit": 3,
+  "word": "curriculum",
+  "pos": "n.",
+  "meaning": "总课程"
+ },
+ {
+  "unit": 3,
+  "word": "assure",
+  "pos": "v.",
+  "meaning": "保证"
+ },
+ {
+  "unit": 3,
+  "word": "accreditation",
+  "pos": "n.",
+  "meaning": "委派，认证"
+ },
+ {
+  "unit": 3,
+  "word": "orientation",
+  "pos": "n.",
+  "meaning": "方向，定位"
+ },
+ {
+  "unit": 3,
+  "word": "faculty",
+  "pos": "n.",
+  "meaning": "能力，技能，系"
+ },
+ {
+  "unit": 3,
+  "word": "authorization",
+  "pos": "n.",
+  "meaning": "授权，批准"
+ },
+ {
+  "unit": 3,
+  "word": "profile",
+  "pos": "n.",
+  "meaning": "简介，印象"
+ },
+ {
+  "unit": 3,
+  "word": "curtain",
+  "pos": "n./v.",
+  "meaning": "窗帘；遮蔽"
+ },
+ {
+  "unit": 3,
+  "word": "collective",
+  "pos": "adj.",
+  "meaning": "集体的"
+ },
+ {
+  "unit": 3,
+  "word": "silver",
+  "pos": "n.",
+  "meaning": "银"
+ },
+ {
+  "unit": 3,
+  "word": "lining",
+  "pos": "n.",
+  "meaning": "组织，衬里，膜"
+ },
+ {
+  "unit": 3,
+  "word": "toxic",
+  "pos": "adj.",
+  "meaning": "有毒的"
+ },
+ {
+  "unit": 3,
+  "word": "debit",
+  "pos": "v./n.",
+  "meaning": "记入借方；借方"
+ },
+ {
+  "unit": 3,
+  "word": "rat",
+  "pos": "n.",
+  "meaning": "鼠，卑鄙小人"
+ },
+ {
+  "unit": 3,
+  "word": "battery",
+  "pos": "n.",
+  "meaning": "电池"
+ },
+ {
+  "unit": 3,
+  "word": "drain",
+  "pos": "v./n.",
+  "meaning": "排水，耗尽；下水道"
+ },
+ {
+  "unit": 3,
+  "word": "skip",
+  "pos": "v.",
+  "meaning": "跳跃，跳过"
+ },
+ {
+  "unit": 3,
+  "word": "phrase",
+  "pos": "n./v.",
+  "meaning": "短语；叙述"
+ },
+ {
+  "unit": 4,
+  "word": "password",
+  "pos": "n.",
+  "meaning": "密码"
+ },
+ {
+  "unit": 4,
+  "word": "sanction",
+  "pos": "n./v.",
+  "meaning": "制裁"
+ },
+ {
+  "unit": 4,
+  "word": "region",
+  "pos": "n.",
+  "meaning": "地区"
+ },
+ {
+  "unit": 4,
+  "word": "defense",
+  "pos": "n.",
+  "meaning": "防守，防御"
+ },
+ {
+  "unit": 4,
+  "word": "escalation",
+  "pos": "n.",
+  "meaning": "扩大，升级"
+ },
+ {
+  "unit": 4,
+  "word": "deploy",
+  "pos": "v.",
+  "meaning": "施展，部署"
+ },
+ {
+  "unit": 4,
+  "word": "economic",
+  "pos": "adj.",
+  "meaning": "经济的"
+ },
+ {
+  "unit": 4,
+  "word": "announce",
+  "pos": "v.",
+  "meaning": "宣布，述说"
+ },
+ {
+  "unit": 4,
+  "word": "suspect",
+  "pos": "v./n.",
+  "meaning": "怀疑；嫌疑犯"
+ },
+ {
+  "unit": 4,
+  "word": "characteristic",
+  "pos": "adj./n.",
+  "meaning": "有特色的；特征"
+ },
+ {
+  "unit": 4,
+  "word": "snub",
+  "pos": "v./adj.",
+  "meaning": "冷落；扁鼻的"
+ },
+ {
+  "unit": 4,
+  "word": "frigid",
+  "pos": "adj.",
+  "meaning": "寒冷的"
+ },
+ {
+  "unit": 4,
+  "word": "envoy",
+  "pos": "n.",
+  "meaning": "使者"
+ },
+ {
+  "unit": 4,
+  "word": "furry",
+  "pos": "adj.",
+  "meaning": "毛皮的"
+ },
+ {
+  "unit": 4,
+  "word": "dense",
+  "pos": "adj.",
+  "meaning": "浓稠的，密集的"
+ },
+ {
+  "unit": 4,
+  "word": "service",
+  "pos": "n./v.",
+  "meaning": "服务；维修"
+ },
+ {
+  "unit": 4,
+  "word": "trap",
+  "pos": "n./v.",
+  "meaning": "陷阱，圈套"
+ },
+ {
+  "unit": 4,
+  "word": "mad",
+  "pos": "adj.",
+  "meaning": "疯的"
+ },
+ {
+  "unit": 4,
+  "word": "scrolling",
+  "pos": "n./v.",
+  "meaning": "卷动；滚动"
+ },
+ {
+  "unit": 4,
+  "word": "snap",
+  "pos": "v.",
+  "meaning": "猛咬，突然折断"
+ },
+ {
+  "unit": 4,
+  "word": "grace",
+  "pos": "n.",
+  "meaning": "优雅"
+ },
+ {
+  "unit": 4,
+  "word": "glance",
+  "pos": "v./n.",
+  "meaning": "扫视；一瞥"
+ },
+ {
+  "unit": 4,
+  "word": "tag",
+  "pos": "n.",
+  "meaning": "标签"
+ },
+ {
+  "unit": 4,
+  "word": "outcome",
+  "pos": "n.",
+  "meaning": "结果"
+ },
+ {
+  "unit": 4,
+  "word": "verification",
+  "pos": "n.",
+  "meaning": "证明，验证"
+ },
+ {
+  "unit": 4,
+  "word": "robust",
+  "pos": "adj.",
+  "meaning": "强健的"
+ },
+ {
+  "unit": 4,
+  "word": "idiot",
+  "pos": "n.",
+  "meaning": "白痴"
+ },
+ {
+  "unit": 4,
+  "word": "quiz",
+  "pos": "n.",
+  "meaning": "知识竞赛"
+ },
+ {
+  "unit": 4,
+  "word": "accent",
+  "pos": "n.",
+  "meaning": "口音"
+ },
+ {
+  "unit": 4,
+  "word": "section",
+  "pos": "n.",
+  "meaning": "章节，地区"
+ },
+ {
+  "unit": 4,
+  "word": "foreign",
+  "pos": "adj.",
+  "meaning": "外国的"
+ },
+ {
+  "unit": 4,
+  "word": "tongue",
+  "pos": "n.",
+  "meaning": "语言，舌头"
+ },
+ {
+  "unit": 4,
+  "word": "rhythm",
+  "pos": "n.",
+  "meaning": "节奏"
+ },
+ {
+  "unit": 4,
+  "word": "instinct",
+  "pos": "n.",
+  "meaning": "本能"
+ },
+ {
+  "unit": 4,
+  "word": "mimic",
+  "pos": "v./n.",
+  "meaning": "模仿；小丑"
+ },
+ {
+  "unit": 4,
+  "word": "reality",
+  "pos": "n.",
+  "meaning": "现实"
+ },
+ {
+  "unit": 4,
+  "word": "mode",
+  "pos": "n.",
+  "meaning": "方式，模式"
+ },
+ {
+  "unit": 4,
+  "word": "winery",
+  "pos": "n.",
+  "meaning": "酿酒厂"
+ },
+ {
+  "unit": 4,
+  "word": "occasion",
+  "pos": "n.",
+  "meaning": "时刻，场所"
+ },
+ {
+  "unit": 5,
+  "word": "exceed",
+  "pos": "v.",
+  "meaning": "超过，领先"
+ },
+ {
+  "unit": 5,
+  "word": "arise",
+  "pos": "v.",
+  "meaning": "发生"
+ },
+ {
+  "unit": 5,
+  "word": "dustbin",
+  "pos": "n.",
+  "meaning": "垃圾箱"
+ },
+ {
+  "unit": 5,
+  "word": "bin",
+  "pos": "n.",
+  "meaning": "大储藏箱"
+ },
+ {
+  "unit": 5,
+  "word": "debris",
+  "pos": "n.",
+  "meaning": "散落的碎片"
+ },
+ {
+  "unit": 5,
+  "word": "countless",
+  "pos": "adj.",
+  "meaning": "无数的"
+ },
+ {
+  "unit": 5,
+  "word": "unsound",
+  "pos": "adj.",
+  "meaning": "不羁的；不健全的"
+ },
+ {
+  "unit": 5,
+  "word": "sift",
+  "pos": "v.",
+  "meaning": "筛选"
+ },
+ {
+  "unit": 5,
+  "word": "salvage",
+  "pos": "v./n.",
+  "meaning": "打捞；抢救"
+ },
+ {
+  "unit": 5,
+  "word": "grid",
+  "pos": "n.",
+  "meaning": "格子，输电网"
+ },
+ {
+  "unit": 5,
+  "word": "site",
+  "pos": "n.",
+  "meaning": "地点，位置"
+ },
+ {
+  "unit": 5,
+  "word": "swing",
+  "pos": "v./n.",
+  "meaning": "摆荡"
+ },
+ {
+  "unit": 5,
+  "word": "discovery",
+  "pos": "n.",
+  "meaning": "发现，发现物"
+ },
+ {
+  "unit": 5,
+  "word": "conservation",
+  "pos": "n.",
+  "meaning": "保护"
+ },
+ {
+  "unit": 5,
+  "word": "unprecedented",
+  "pos": "adj.",
+  "meaning": "史无前例的"
+ },
+ {
+  "unit": 5,
+  "word": "precedent",
+  "pos": "n.",
+  "meaning": "先例"
+ },
+ {
+  "unit": 5,
+  "word": "brigade",
+  "pos": "n./v.",
+  "meaning": "队列；编队"
+ },
+ {
+  "unit": 5,
+  "word": "scene",
+  "pos": "n.",
+  "meaning": "情景"
+ },
+ {
+  "unit": 5,
+  "word": "priceless",
+  "pos": "adj.",
+  "meaning": "无比贵重"
+ },
+ {
+  "unit": 5,
+  "word": "price",
+  "pos": "n.",
+  "meaning": "价格"
+ },
+ {
+  "unit": 5,
+  "word": "humanity",
+  "pos": "n.",
+  "meaning": "人类，仁慈；人文精神"
+ },
+ {
+  "unit": 5,
+  "word": "logic",
+  "pos": "n.",
+  "meaning": "逻辑"
+ },
+ {
+  "unit": 5,
+  "word": "enemy",
+  "pos": "n.",
+  "meaning": "敌人"
+ },
+ {
+  "unit": 5,
+  "word": "evil",
+  "pos": "adj./n.",
+  "meaning": "邪恶的"
+ },
+ {
+  "unit": 5,
+  "word": "pray",
+  "pos": "v.",
+  "meaning": "祷告"
+ },
+ {
+  "unit": 5,
+  "word": "vote",
+  "pos": "v./n.",
+  "meaning": "投票"
+ },
+ {
+  "unit": 5,
+  "word": "division",
+  "pos": "n.",
+  "meaning": "分配，除法"
+ },
+ {
+  "unit": 5,
+  "word": "dignity",
+  "pos": "n.",
+  "meaning": "庄重，尊严"
+ },
+ {
+  "unit": 5,
+  "word": "harass",
+  "pos": "v.",
+  "meaning": "骚扰"
+ },
+ {
+  "unit": 5,
+  "word": "pad",
+  "pos": "n.",
+  "meaning": "垫"
+ },
+ {
+  "unit": 5,
+  "word": "plot",
+  "pos": "n.",
+  "meaning": "情节"
+ },
+ {
+  "unit": 5,
+  "word": "quote",
+  "pos": "v./n.",
+  "meaning": "引用；引语"
+ },
+ {
+  "unit": 5,
+  "word": "style",
+  "pos": "n.",
+  "meaning": "做事方式，风格"
+ },
+ {
+  "unit": 5,
+  "word": "exposition",
+  "pos": "n.",
+  "meaning": "讲解，阐述"
+ },
+ {
+  "unit": 5,
+  "word": "narrative",
+  "pos": "n.",
+  "meaning": "记叙文"
+ },
+ {
+  "unit": 5,
+  "word": "biography",
+  "pos": "n.",
+  "meaning": "传记"
+ },
+ {
+  "unit": 5,
+  "word": "structure",
+  "pos": "n.",
+  "meaning": "结构"
+ },
+ {
+  "unit": 5,
+  "word": "device",
+  "pos": "n.",
+  "meaning": "装置，方式，炸弹"
+ },
+ {
+  "unit": 5,
+  "word": "theme",
+  "pos": "n.",
+  "meaning": "主题"
+ },
+ {
+  "unit": 5,
+  "word": "technique",
+  "pos": "n.",
+  "meaning": "技巧，手段"
+ },
+ {
+  "unit": 5,
+  "word": "rhetorical",
+  "pos": "adj.",
+  "meaning": "修辞的"
+ },
+ {
+  "unit": 5,
+  "word": "purpose",
+  "pos": "n.",
+  "meaning": "意图"
+ },
+ {
+  "unit": 5,
+  "word": "opinion",
+  "pos": "n.",
+  "meaning": "意见"
+ },
+ {
+  "unit": 5,
+  "word": "opposite",
+  "pos": "adj.",
+  "meaning": "完全不同的"
+ },
+ {
+  "unit": 5,
+  "word": "strike",
+  "pos": "v./n.",
+  "meaning": "罢工；撕咬"
+ },
+ {
+  "unit": 5,
+  "word": "cord",
+  "pos": "n.",
+  "meaning": "绳，索"
+ },
+ {
+  "unit": 5,
+  "word": "spin",
+  "pos": "v./n.",
+  "meaning": "旋转"
+ },
+ {
+  "unit": 5,
+  "word": "enlarge",
+  "pos": "v.",
+  "meaning": "扩大"
+ },
+ {
+  "unit": 5,
+  "word": "enlighten",
+  "pos": "v.",
+  "meaning": "启迪"
+ },
+ {
+  "unit": 5,
+  "word": "empathy",
+  "pos": "n.",
+  "meaning": "同感，共鸣"
+ },
+ {
+  "unit": 5,
+  "word": "invoke",
+  "pos": "v.",
+  "meaning": "援引，借助"
+ },
+ {
+  "unit": 5,
+  "word": "convey",
+  "pos": "v.",
+  "meaning": "表达"
+ },
+ {
+  "unit": 5,
+  "word": "sculp",
+  "pos": "n.",
+  "meaning": "雕像（sculpture）"
+ },
+ {
+  "unit": 5,
+  "word": "in point",
+  "pos": "phr.",
+  "meaning": "在实质上"
+ },
+ {
+  "unit": 6,
+  "word": "duplication",
+  "pos": "n.",
+  "meaning": "复制，重复"
+ },
+ {
+  "unit": 6,
+  "word": "speech",
+  "pos": "n.",
+  "meaning": "演讲"
+ },
+ {
+  "unit": 6,
+  "word": "externalization",
+  "pos": "n.",
+  "meaning": "外化"
+ },
+ {
+  "unit": 6,
+  "word": "internalization",
+  "pos": "n.",
+  "meaning": "内化"
+ },
+ {
+  "unit": 6,
+  "word": "crumble",
+  "pos": "v.",
+  "meaning": "把…弄碎"
+ },
+ {
+  "unit": 6,
+  "word": "collocate",
+  "pos": "v.",
+  "meaning": "配置，搭配"
+ },
+ {
+  "unit": 6,
+  "word": "crack",
+  "pos": "v./n.",
+  "meaning": "裂开；裂缝"
+ },
+ {
+  "unit": 6,
+  "word": "dot",
+  "pos": "n.",
+  "meaning": "点"
+ },
+ {
+  "unit": 6,
+  "word": "matrix",
+  "pos": "n.",
+  "meaning": "矩阵"
+ },
+ {
+  "unit": 6,
+  "word": "reputation",
+  "pos": "n.",
+  "meaning": "声誉"
+ },
+ {
+  "unit": 6,
+  "word": "click",
+  "pos": "v./n.",
+  "meaning": "点击"
+ },
+ {
+  "unit": 6,
+  "word": "obsession",
+  "pos": "n.",
+  "meaning": "沉迷"
+ },
+ {
+  "unit": 6,
+  "word": "addict",
+  "pos": "v./n.",
+  "meaning": "使沉迷；上瘾者"
+ },
+ {
+  "unit": 6,
+  "word": "neatly",
+  "pos": "adv.",
+  "meaning": "整洁地"
+ },
+ {
+  "unit": 6,
+  "word": "hacker",
+  "pos": "n.",
+  "meaning": "黑客"
+ },
+ {
+  "unit": 6,
+  "word": "indifferent",
+  "pos": "adj.",
+  "meaning": "冷漠的"
+ },
+ {
+  "unit": 6,
+  "word": "potential",
+  "pos": "adj./n.",
+  "meaning": "潜在的；潜力"
+ },
+ {
+  "unit": 6,
+  "word": "downside",
+  "pos": "n.",
+  "meaning": "缺点"
+ },
+ {
+  "unit": 6,
+  "word": "fulfill",
+  "pos": "v.",
+  "meaning": "完成"
+ },
+ {
+  "unit": 6,
+  "word": "method",
+  "pos": "n.",
+  "meaning": "方法"
+ },
+ {
+  "unit": 6,
+  "word": "incentive",
+  "pos": "n.",
+  "meaning": "激励"
+ },
+ {
+  "unit": 6,
+  "word": "relatively",
+  "pos": "adv.",
+  "meaning": "相当地"
+ },
+ {
+  "unit": 6,
+  "word": "compromise",
+  "pos": "v./n.",
+  "meaning": "妥协"
+ },
+ {
+  "unit": 6,
+  "word": "spoil",
+  "pos": "v.",
+  "meaning": "溺爱，破坏"
+ },
+ {
+  "unit": 6,
+  "word": "sponsor",
+  "pos": "v./n.",
+  "meaning": "赞助；赞助商"
+ },
+ {
+  "unit": 6,
+  "word": "psychological",
+  "pos": "adj.",
+  "meaning": "心理的"
+ },
+ {
+  "unit": 6,
+  "word": "voice",
+  "pos": "n.",
+  "meaning": "嗓音，表达"
+ },
+ {
+  "unit": 6,
+  "word": "startling",
+  "pos": "adj.",
+  "meaning": "令人震惊的"
+ },
+ {
+  "unit": 6,
+  "word": "conjunction",
+  "pos": "n.",
+  "meaning": "连词"
+ },
+ {
+  "unit": 6,
+  "word": "enforce",
+  "pos": "v.",
+  "meaning": "实行，执行"
+ },
+ {
+  "unit": 6,
+  "word": "agenda",
+  "pos": "n.",
+  "meaning": "议题，议程"
+ },
+ {
+  "unit": 6,
+  "word": "taxation",
+  "pos": "n.",
+  "meaning": "税收"
+ },
+ {
+  "unit": 6,
+  "word": "impose",
+  "pos": "v.",
+  "meaning": "推行，强加"
+ },
+ {
+  "unit": 6,
+  "word": "advantageous",
+  "pos": "adj.",
+  "meaning": "有利可图的"
+ },
+ {
+  "unit": 6,
+  "word": "allowance",
+  "pos": "n.",
+  "meaning": "津贴"
+ },
+ {
+  "unit": 6,
+  "word": "unemployed",
+  "pos": "adj.",
+  "meaning": "失业的"
+ },
+ {
+  "unit": 6,
+  "word": "put off",
+  "pos": "phr.",
+  "meaning": "推迟"
+ },
+ {
+  "unit": 7,
+  "word": "trade",
+  "pos": "n.",
+  "meaning": "行业，贸易"
+ },
+ {
+  "unit": 7,
+  "word": "nobility",
+  "pos": "n.",
+  "meaning": "贵族阶层"
+ },
+ {
+  "unit": 7,
+  "word": "depict",
+  "pos": "v.",
+  "meaning": "描绘"
+ },
+ {
+  "unit": 7,
+  "word": "theatre",
+  "pos": "n.",
+  "meaning": "电影院，剧院"
+ },
+ {
+  "unit": 7,
+  "word": "servant",
+  "pos": "n.",
+  "meaning": "仆人"
+ },
+ {
+  "unit": 7,
+  "word": "produce",
+  "pos": "v./n.",
+  "meaning": "生产，创作；农产品"
+ },
+ {
+  "unit": 7,
+  "word": "instrument",
+  "pos": "n.",
+  "meaning": "乐器，仪器"
+ },
+ {
+  "unit": 7,
+  "word": "flute",
+  "pos": "n./v.",
+  "meaning": "长笛；吹长笛"
+ },
+ {
+  "unit": 7,
+  "word": "simulate",
+  "pos": "v.",
+  "meaning": "模仿"
+ },
+ {
+  "unit": 7,
+  "word": "automata",
+  "pos": "n.",
+  "meaning": "自动操作装置（单数 automaton）"
+ },
+ {
+  "unit": 7,
+  "word": "automation",
+  "pos": "n.",
+  "meaning": "机器人，自动化"
+ },
+ {
+  "unit": 7,
+  "word": "document",
+  "pos": "n.",
+  "meaning": "文件"
+ },
+ {
+  "unit": 7,
+  "word": "detailed",
+  "pos": "adj.",
+  "meaning": "详细的"
+ },
+ {
+  "unit": 7,
+  "word": "treatise",
+  "pos": "n.",
+  "meaning": "论文"
+ },
+ {
+  "unit": 7,
+  "word": "swan",
+  "pos": "n.",
+  "meaning": "天鹅"
+ },
+ {
+  "unit": 7,
+  "word": "concern",
+  "pos": "n./v.",
+  "meaning": "关心；涉及"
+ },
+ {
+  "unit": 7,
+  "word": "repute",
+  "pos": "n./v.",
+  "meaning": "名誉；认为"
+ },
+ {
+  "unit": 7,
+  "word": "brief",
+  "pos": "adj.",
+  "meaning": "简短的"
+ },
+ {
+  "unit": 7,
+  "word": "executable",
+  "pos": "adj.",
+  "meaning": "实行的"
+ },
+ {
+  "unit": 7,
+  "word": "concrete",
+  "pos": "adj.",
+  "meaning": "混凝土制的，确实的"
+ },
+ {
+  "unit": 7,
+  "word": "fact",
+  "pos": "n.",
+  "meaning": "功绩，技艺表演"
+ },
+ {
+  "unit": 7,
+  "word": "interface",
+  "pos": "n./v.",
+  "meaning": "界面；接口"
+ },
+ {
+  "unit": 7,
+  "word": "compile",
+  "pos": "v.",
+  "meaning": "编译"
+ },
+ {
+  "unit": 7,
+  "word": "calculate",
+  "pos": "v.",
+  "meaning": "计算"
+ },
+ {
+  "unit": 7,
+  "word": "assembly",
+  "pos": "n.",
+  "meaning": "装配，集会"
+ },
+ {
+  "unit": 7,
+  "word": "characterize",
+  "pos": "v.",
+  "meaning": "以…为特征"
+ },
+ {
+  "unit": 7,
+  "word": "execute",
+  "pos": "v.",
+  "meaning": "执行"
+ },
+ {
+  "unit": 7,
+  "word": "fetch",
+  "pos": "v.",
+  "meaning": "取来"
+ },
+ {
+  "unit": 7,
+  "word": "monitor",
+  "pos": "n./v.",
+  "meaning": "显示屏；监控"
+ },
+ {
+  "unit": 7,
+  "word": "graphic",
+  "pos": "adj.",
+  "meaning": "图表的"
+ },
+ {
+  "unit": 7,
+  "word": "disk",
+  "pos": "n.",
+  "meaning": "磁盘"
+ },
+ {
+  "unit": 7,
+  "word": "shortcoming",
+  "pos": "n.",
+  "meaning": "短处"
+ },
+ {
+  "unit": 7,
+  "word": "array",
+  "pos": "n.",
+  "meaning": "数组，排列"
+ },
+ {
+  "unit": 7,
+  "word": "explicit",
+  "pos": "adj.",
+  "meaning": "清晰的，直接的"
+ },
+ {
+  "unit": 7,
+  "word": "trace",
+  "pos": "v./n.",
+  "meaning": "追溯"
+ },
+ {
+  "unit": 7,
+  "word": "code",
+  "pos": "n.",
+  "meaning": "代码"
+ },
+ {
+  "unit": 7,
+  "word": "portability",
+  "pos": "n.",
+  "meaning": "可携带性，可移植性"
+ },
+ {
+  "unit": 7,
+  "word": "string",
+  "pos": "n.",
+  "meaning": "绳，弦，字符串"
+ },
+ {
+  "unit": 7,
+  "word": "security",
+  "pos": "n.",
+  "meaning": "保护，安全"
+ },
+ {
+  "unit": 7,
+  "word": "stun",
+  "pos": "v.",
+  "meaning": "击晕"
+ },
+ {
+  "unit": 7,
+  "word": "stunning",
+  "pos": "adj.",
+  "meaning": "极好的"
+ },
+ {
+  "unit": 7,
+  "word": "rod",
+  "pos": "n.",
+  "meaning": "棒杆"
+ },
+ {
+  "unit": 7,
+  "word": "stream",
+  "pos": "n./v.",
+  "meaning": "溪流；流"
+ },
+ {
+  "unit": 7,
+  "word": "fountain",
+  "pos": "n.",
+  "meaning": "喷泉"
+ },
+ {
+  "unit": 7,
+  "word": "handle",
+  "pos": "n./v.",
+  "meaning": "柄，把手；处理"
+ },
+ {
+  "unit": 7,
+  "word": "informed",
+  "pos": "adj.",
+  "meaning": "消息灵通的"
+ },
+ {
+  "unit": 7,
+  "word": "likelihood",
+  "pos": "n.",
+  "meaning": "可能性"
+ },
+ {
+  "unit": 7,
+  "word": "journalist",
+  "pos": "n.",
+  "meaning": "新闻记者"
+ },
+ {
+  "unit": 7,
+  "word": "despondent",
+  "pos": "adj.",
+  "meaning": "沮丧的"
+ },
+ {
+  "unit": 7,
+  "word": "press",
+  "pos": "n./v.",
+  "meaning": "出版社，印刷机；按压"
+ },
+ {
+  "unit": 8,
+  "word": "underneath",
+  "pos": "prep./n.",
+  "meaning": "在…下面；底部"
+ },
+ {
+  "unit": 8,
+  "word": "bite",
+  "pos": "v./n.",
+  "meaning": "咬，叮"
+ },
+ {
+  "unit": 8,
+  "word": "tube",
+  "pos": "n.",
+  "meaning": "管"
+ },
+ {
+  "unit": 8,
+  "word": "silly",
+  "pos": "adj.",
+  "meaning": "蠢的"
+ },
+ {
+  "unit": 8,
+  "word": "marine",
+  "pos": "adj.",
+  "meaning": "海生的"
+ },
+ {
+  "unit": 8,
+  "word": "transparent",
+  "pos": "adj.",
+  "meaning": "透明的"
+ },
+ {
+  "unit": 8,
+  "word": "investigate",
+  "pos": "v.",
+  "meaning": "调查"
+ },
+ {
+  "unit": 8,
+  "word": "relate",
+  "pos": "v.",
+  "meaning": "把…联系起来"
+ },
+ {
+  "unit": 8,
+  "word": "consciousness",
+  "pos": "n.",
+  "meaning": "知觉，意识"
+ },
+ {
+  "unit": 8,
+  "word": "primate",
+  "pos": "n.",
+  "meaning": "灵长目动物"
+ },
+ {
+  "unit": 8,
+  "word": "trunk",
+  "pos": "n.",
+  "meaning": "树干，后备箱"
+ },
+ {
+  "unit": 8,
+  "word": "crow",
+  "pos": "n.",
+  "meaning": "乌鸦"
+ },
+ {
+  "unit": 8,
+  "word": "cognitive",
+  "pos": "adj.",
+  "meaning": "认知的"
+ },
+ {
+  "unit": 8,
+  "word": "grief",
+  "pos": "n.",
+  "meaning": "悲伤"
+ },
+ {
+  "unit": 8,
+  "word": "vocabulary",
+  "pos": "n.",
+  "meaning": "词汇"
+ },
+ {
+  "unit": 8,
+  "word": "angel",
+  "pos": "n.",
+  "meaning": "天使"
+ },
+ {
+  "unit": 8,
+  "word": "cortex",
+  "pos": "n.",
+  "meaning": "皮层"
+ },
+ {
+  "unit": 8,
+  "word": "portion",
+  "pos": "n./v.",
+  "meaning": "部分；分配"
+ },
+ {
+  "unit": 8,
+  "word": "dominant",
+  "pos": "adj./n.",
+  "meaning": "支配的；显性"
+ },
+ {
+  "unit": 8,
+  "word": "limbic",
+  "pos": "adj.",
+  "meaning": "边缘的"
+ },
+ {
+  "unit": 8,
+  "word": "halt",
+  "pos": "v./n.",
+  "meaning": "停止"
+ },
+ {
+  "unit": 8,
+  "word": "elegant",
+  "pos": "adj.",
+  "meaning": "优美的"
+ },
+ {
+  "unit": 8,
+  "word": "lyric",
+  "pos": "adj.",
+  "meaning": "抒情的"
+ },
+ {
+  "unit": 8,
+  "word": "cozy",
+  "pos": "adj.",
+  "meaning": "舒适的"
+ },
+ {
+  "unit": 8,
+  "word": "spool",
+  "pos": "v./n.",
+  "meaning": "缠绕；线轴"
+ },
+ {
+  "unit": 8,
+  "word": "span",
+  "pos": "n./v.",
+  "meaning": "跨距，跨度"
+ },
+ {
+  "unit": 8,
+  "word": "multiple",
+  "pos": "adj.",
+  "meaning": "多样的"
+ },
+ {
+  "unit": 8,
+  "word": "completion",
+  "pos": "n.",
+  "meaning": "完成"
+ },
+ {
+  "unit": 8,
+  "word": "complete",
+  "pos": "adj./v.",
+  "meaning": "完全的；完成"
+ },
+ {
+  "unit": 8,
+  "word": "motto",
+  "pos": "n.",
+  "meaning": "座右铭"
+ },
+ {
+  "unit": 8,
+  "word": "motive",
+  "pos": "n.",
+  "meaning": "动机"
+ },
+ {
+  "unit": 8,
+  "word": "infer",
+  "pos": "v.",
+  "meaning": "推断"
+ },
+ {
+  "unit": 8,
+  "word": "paraphrase",
+  "pos": "n./v.",
+  "meaning": "释义"
+ },
+ {
+  "unit": 8,
+  "word": "outline",
+  "pos": "n.",
+  "meaning": "轮廓，大纲"
+ },
+ {
+  "unit": 8,
+  "word": "instantaneous",
+  "pos": "adj.",
+  "meaning": "瞬时的"
+ },
+ {
+  "unit": 8,
+  "word": "slide",
+  "pos": "v./n.",
+  "meaning": "滑动；幻灯片"
+ },
+ {
+  "unit": 8,
+  "word": "curve",
+  "pos": "n./v.",
+  "meaning": "曲线"
+ },
+ {
+  "unit": 8,
+  "word": "tangent",
+  "pos": "adj./n.",
+  "meaning": "切线的"
+ },
+ {
+  "unit": 8,
+  "word": "integral",
+  "pos": "adj./n.",
+  "meaning": "必要的；积分"
+ },
+ {
+  "unit": 8,
+  "word": "calculus",
+  "pos": "n.",
+  "meaning": "微积分"
+ },
+ {
+  "unit": 8,
+  "word": "derivative",
+  "pos": "n./adj.",
+  "meaning": "衍生物；模仿他人的"
+ },
+ {
+  "unit": 8,
+  "word": "congratulation",
+  "pos": "n.",
+  "meaning": "祝贺"
+ },
+ {
+  "unit": 8,
+  "word": "propose",
+  "pos": "v.",
+  "meaning": "提议，提出"
+ },
+ {
+  "unit": 8,
+  "word": "orient",
+  "pos": "v.",
+  "meaning": "确定方向"
+ },
+ {
+  "unit": 8,
+  "word": "narrate",
+  "pos": "v.",
+  "meaning": "讲故事"
+ },
+ {
+  "unit": 9,
+  "word": "ethic",
+  "pos": "n.",
+  "meaning": "道德，伦理"
+ },
+ {
+  "unit": 9,
+  "word": "sympathy",
+  "pos": "n.",
+  "meaning": "同情"
+ },
+ {
+  "unit": 9,
+  "word": "apathy",
+  "pos": "n.",
+  "meaning": "无情，冷漠"
+ },
+ {
+  "unit": 9,
+  "word": "exordium",
+  "pos": "n.",
+  "meaning": "绪论"
+ },
+ {
+  "unit": 9,
+  "word": "refute",
+  "pos": "v.",
+  "meaning": "反驳"
+ },
+ {
+  "unit": 9,
+  "word": "speak",
+  "pos": "v.",
+  "meaning": "说话（n. speech）"
+ },
+ {
+  "unit": 9,
+  "word": "peroration",
+  "pos": "n.",
+  "meaning": "结论（演说结尾，v. perorate）"
+ },
+ {
+  "unit": 9,
+  "word": "perimeter",
+  "pos": "n.",
+  "meaning": "周围，周长"
+ },
+ {
+  "unit": 9,
+  "word": "categorization",
+  "pos": "n.",
+  "meaning": "区别，分类"
+ },
+ {
+  "unit": 9,
+  "word": "aspect",
+  "pos": "n.",
+  "meaning": "方面，视角"
+ },
+ {
+  "unit": 9,
+  "word": "exemplification",
+  "pos": "n.",
+  "meaning": "例证"
+ },
+ {
+  "unit": 9,
+  "word": "skim",
+  "pos": "v.",
+  "meaning": "掠过，浏览"
+ },
+ {
+  "unit": 9,
+  "word": "scan",
+  "pos": "v.",
+  "meaning": "扫描"
+ },
+ {
+  "unit": 9,
+  "word": "specify",
+  "pos": "v.",
+  "meaning": "指定"
+ },
+ {
+  "unit": 9,
+  "word": "inductive",
+  "pos": "adj.",
+  "meaning": "归纳法的"
+ },
+ {
+  "unit": 9,
+  "word": "deductive",
+  "pos": "adj.",
+  "meaning": "推演的，演绎的"
+ },
+ {
+  "unit": 9,
+  "word": "poverty",
+  "pos": "n.",
+  "meaning": "贫困"
+ },
+ {
+  "unit": 9,
+  "word": "ration",
+  "pos": "v./n.",
+  "meaning": "配给；定量"
+ },
+ {
+  "unit": 9,
+  "word": "rationem",
+  "pos": "n.",
+  "meaning": "理性（拉丁语）"
+ },
+ {
+  "unit": 10,
+  "word": "bald",
+  "pos": "adj.",
+  "meaning": "秃的，冒失的，明显的"
+ },
+ {
+  "unit": 10,
+  "word": "worn",
+  "pos": "adj.",
+  "meaning": "旧的"
+ },
+ {
+  "unit": 10,
+  "word": "illiteracy",
+  "pos": "n.",
+  "meaning": "文盲"
+ },
+ {
+  "unit": 10,
+  "word": "tackling",
+  "pos": "n./v.",
+  "meaning": "处理，应对"
+ },
+ {
+  "unit": 10,
+  "word": "crisis",
+  "pos": "n.",
+  "meaning": "危机"
+ },
+ {
+  "unit": 10,
+  "word": "mount",
+  "pos": "v./n.",
+  "meaning": "上升，增加；山峰"
+ },
+ {
+  "unit": 10,
+  "word": "initiative",
+  "pos": "n.",
+  "meaning": "主动性，首创精神"
+ },
+ {
+  "unit": 10,
+  "word": "criticize",
+  "pos": "v.",
+  "meaning": "批评"
+ },
+ {
+  "unit": 10,
+  "word": "bestow",
+  "pos": "v.",
+  "meaning": "授予"
+ },
+ {
+  "unit": 10,
+  "word": "upon",
+  "pos": "prep.",
+  "meaning": "在…之上"
+ },
+ {
+  "unit": 10,
+  "word": "ultimately",
+  "pos": "adv.",
+  "meaning": "最后地"
+ },
+ {
+  "unit": 10,
+  "word": "respective",
+  "pos": "adj.",
+  "meaning": "各自的"
+ },
+ {
+  "unit": 10,
+  "word": "accessible",
+  "pos": "adj.",
+  "meaning": "易取得的"
+ },
+ {
+  "unit": 10,
+  "word": "isolation",
+  "pos": "n.",
+  "meaning": "隔离"
+ },
+ {
+  "unit": 10,
+  "word": "storage",
+  "pos": "n.",
+  "meaning": "存储"
+ },
+ {
+  "unit": 10,
+  "word": "plug",
+  "pos": "n.",
+  "meaning": "插头"
+ },
+ {
+  "unit": 10,
+  "word": "undergraduate degree",
+  "pos": "phr.",
+  "meaning": "本科学位"
+ },
+ {
+  "unit": 10,
+  "word": "undertake",
+  "pos": "v.",
+  "meaning": "攻读，承担"
+ },
+ {
+  "unit": 10,
+  "word": "shrink",
+  "pos": "v.",
+  "meaning": "缩减"
+ },
+ {
+  "unit": 10,
+  "word": "opt",
+  "pos": "v.",
+  "meaning": "选择（opted：可选择的）"
+ },
+ {
+  "unit": 10,
+  "word": "repercussion",
+  "pos": "n.",
+  "meaning": "后果，影响"
+ },
+ {
+  "unit": 10,
+  "word": "venture",
+  "pos": "n./v.",
+  "meaning": "冒险企业，冒险"
+ },
+ {
+  "unit": 11,
+  "word": "textile",
+  "pos": "n.",
+  "meaning": "纺织品"
+ },
+ {
+  "unit": 11,
+  "word": "garment",
+  "pos": "n.",
+  "meaning": "衣服"
+ },
+ {
+  "unit": 11,
+  "word": "sector",
+  "pos": "n.",
+  "meaning": "部分，部门"
+ },
+ {
+  "unit": 11,
+  "word": "cotton",
+  "pos": "n.",
+  "meaning": "棉花"
+ },
+ {
+  "unit": 11,
+  "word": "continent",
+  "pos": "n.",
+  "meaning": "洲，大陆"
+ },
+ {
+  "unit": 11,
+  "word": "constitute",
+  "pos": "v.",
+  "meaning": "构成，建立"
+ },
+ {
+  "unit": 11,
+  "word": "agriculture",
+  "pos": "n.",
+  "meaning": "农业"
+ },
+ {
+  "unit": 11,
+  "word": "tragic",
+  "pos": "adj.",
+  "meaning": "凄惨的"
+ },
+ {
+  "unit": 11,
+  "word": "greedy",
+  "pos": "adj.",
+  "meaning": "贪婪的"
+ },
+ {
+  "unit": 11,
+  "word": "rug",
+  "pos": "n.",
+  "meaning": "地毯"
+ },
+ {
+  "unit": 11,
+  "word": "disturb",
+  "pos": "v.",
+  "meaning": "打扰"
+ },
+ {
+  "unit": 11,
+  "word": "pesticide",
+  "pos": "n.",
+  "meaning": "杀虫剂"
+ },
+ {
+  "unit": 11,
+  "word": "poisonous",
+  "pos": "adj.",
+  "meaning": "有毒的"
+ },
+ {
+  "unit": 11,
+  "word": "toxin",
+  "pos": "n.",
+  "meaning": "毒素"
+ },
+ {
+  "unit": 11,
+  "word": "contaminate",
+  "pos": "v.",
+  "meaning": "弄脏，污染"
+ },
+ {
+  "unit": 11,
+  "word": "suicide",
+  "pos": "n./v.",
+  "meaning": "自杀"
+ },
+ {
+  "unit": 11,
+  "word": "urgent",
+  "pos": "adj.",
+  "meaning": "紧急的"
+ },
+ {
+  "unit": 11,
+  "word": "attribute",
+  "pos": "v./n.",
+  "meaning": "把…归因于；属性"
+ },
+ {
+  "unit": 11,
+  "word": "broker",
+  "pos": "n.",
+  "meaning": "中间商"
+ },
+ {
+  "unit": 11,
+  "word": "debt",
+  "pos": "n.",
+  "meaning": "债务"
+ },
+ {
+  "unit": 11,
+  "word": "contract",
+  "pos": "n./v.",
+  "meaning": "合约；收缩"
+ },
+ {
+  "unit": 11,
+  "word": "poison",
+  "pos": "n./v.",
+  "meaning": "毒物；毒害"
+ },
+ {
+  "unit": 11,
+  "word": "scheme",
+  "pos": "n.",
+  "meaning": "方案，计谋"
+ },
+ {
+  "unit": 11,
+  "word": "distract",
+  "pos": "v.",
+  "meaning": "使分心"
+ },
+ {
+  "unit": 11,
+  "word": "practice",
+  "pos": "n./v.",
+  "meaning": "实际，练习"
+ },
+ {
+  "unit": 11,
+  "word": "appalling",
+  "pos": "adj.",
+  "meaning": "骇人听闻的"
+ },
+ {
+  "unit": 11,
+  "word": "appeal",
+  "pos": "n./v.",
+  "meaning": "吸引；呼吁"
+ },
+ {
+  "unit": 11,
+  "word": "seizure",
+  "pos": "n.",
+  "meaning": "征收，扣押"
+ },
+ {
+  "unit": 11,
+  "word": "shut down",
+  "pos": "phr.",
+  "meaning": "关闭"
+ },
+ {
+  "unit": 11,
+  "word": "corrupt",
+  "pos": "adj./v.",
+  "meaning": "腐败的；使腐化"
+ },
+ {
+  "unit": 11,
+  "word": "political",
+  "pos": "adj.",
+  "meaning": "政治的"
+ },
+ {
+  "unit": 11,
+  "word": "premium",
+  "pos": "n.",
+  "meaning": "补贴，保险费"
+ },
+ {
+  "unit": 11,
+  "word": "controversial",
+  "pos": "adj.",
+  "meaning": "有争议的"
+ },
+ {
+  "unit": 11,
+  "word": "stylish",
+  "pos": "adj.",
+  "meaning": "时尚的"
+ },
+ {
+  "unit": 11,
+  "word": "revenue",
+  "pos": "n.",
+  "meaning": "税收，收入"
+ },
+ {
+  "unit": 11,
+  "word": "retail",
+  "pos": "n./v.",
+  "meaning": "零售"
+ },
+ {
+  "unit": 11,
+  "word": "article",
+  "pos": "n.",
+  "meaning": "物品，文章"
+ },
+ {
+  "unit": 11,
+  "word": "boycott",
+  "pos": "v./n.",
+  "meaning": "拒绝参加，抵制"
+ },
+ {
+  "unit": 11,
+  "word": "organic",
+  "pos": "adj.",
+  "meaning": "有机的"
+ },
+ {
+  "unit": 11,
+  "word": "comply",
+  "pos": "v.",
+  "meaning": "答应，遵从"
+ },
+ {
+  "unit": 11,
+  "word": "seize",
+  "pos": "v.",
+  "meaning": "抓住"
+ },
+ {
+  "unit": 11,
+  "word": "regulation",
+  "pos": "n.",
+  "meaning": "章程，规章"
+ },
+ {
+  "unit": 11,
+  "word": "enter contract",
+  "pos": "phr.",
+  "meaning": "签订合同"
+ },
+ {
+  "unit": 11,
+  "word": "stipulate",
+  "pos": "v.",
+  "meaning": "规定"
+ },
+ {
+  "unit": 11,
+  "word": "rectify",
+  "pos": "v.",
+  "meaning": "改正"
+ },
+ {
+  "unit": 11,
+  "word": "manner",
+  "pos": "n.",
+  "meaning": "方法，方式"
+ },
+ {
+  "unit": 12,
+  "word": "gem",
+  "pos": "n.",
+  "meaning": "宝石"
+ },
+ {
+  "unit": 12,
+  "word": "jewel",
+  "pos": "n./v.",
+  "meaning": "宝石；镶以宝石"
+ },
+ {
+  "unit": 12,
+  "word": "catwalk",
+  "pos": "n.",
+  "meaning": "狭长通道，T台"
+ },
+ {
+  "unit": 12,
+  "word": "hip",
+  "pos": "n./adj.",
+  "meaning": "臀部；非常时髦的"
+ },
+ {
+  "unit": 12,
+  "word": "myth",
+  "pos": "n.",
+  "meaning": "神话"
+ },
+ {
+  "unit": 12,
+  "word": "fashion",
+  "pos": "n.",
+  "meaning": "样式，时尚"
+ },
+ {
+  "unit": 12,
+  "word": "holy",
+  "pos": "adj.",
+  "meaning": "圣洁的"
+ },
+ {
+  "unit": 12,
+  "word": "emerald",
+  "pos": "n.",
+  "meaning": "绿宝石"
+ },
+ {
+  "unit": 12,
+  "word": "scripture",
+  "pos": "n.",
+  "meaning": "经文"
+ },
+ {
+  "unit": 12,
+  "word": "treasure",
+  "pos": "n./v.",
+  "meaning": "宝藏"
+ },
+ {
+  "unit": 12,
+  "word": "chest",
+  "pos": "n.",
+  "meaning": "胸部，箱子"
+ },
+ {
+  "unit": 12,
+  "word": "jade",
+  "pos": "n.",
+  "meaning": "碧玉"
+ },
+ {
+  "unit": 12,
+  "word": "apart from",
+  "pos": "phr.",
+  "meaning": "远离；除…之外"
+ },
+ {
+  "unit": 12,
+  "word": "weapon",
+  "pos": "n.",
+  "meaning": "武器"
+ },
+ {
+  "unit": 12,
+  "word": "cult",
+  "pos": "adj./n.",
+  "meaning": "狂热的；崇拜"
+ },
+ {
+  "unit": 12,
+  "word": "furnish",
+  "pos": "v.",
+  "meaning": "布置，供应"
+ },
+ {
+  "unit": 12,
+  "word": "grave",
+  "pos": "n./adj.",
+  "meaning": "坟墓；严肃的"
+ },
+ {
+  "unit": 12,
+  "word": "imperial",
+  "pos": "adj.",
+  "meaning": "皇帝的"
+ },
+ {
+  "unit": 12,
+  "word": "emperor",
+  "pos": "n.",
+  "meaning": "皇帝"
+ },
+ {
+  "unit": 12,
+  "word": "figure",
+  "pos": "n./v.",
+  "meaning": "人物，数字；描绘"
+ },
+ {
+  "unit": 12,
+  "word": "vivacity",
+  "pos": "n.",
+  "meaning": "活泼"
+ },
+ {
+  "unit": 12,
+  "word": "peril",
+  "pos": "n.",
+  "meaning": "危险"
+ },
+ {
+  "unit": 12,
+  "word": "shield",
+  "pos": "n./v.",
+  "meaning": "盾牌；保卫"
+ },
+ {
+  "unit": 12,
+  "word": "forthcoming",
+  "pos": "adj.",
+  "meaning": "即将到来"
+ },
+ {
+  "unit": 12,
+  "word": "mask",
+  "pos": "n.",
+  "meaning": "面罩"
+ },
+ {
+  "unit": 12,
+  "word": "ceremony",
+  "pos": "n.",
+  "meaning": "典礼"
+ },
+ {
+  "unit": 12,
+  "word": "therapist",
+  "pos": "n.",
+  "meaning": "治疗学家"
+ },
+ {
+  "unit": 12,
+  "word": "aviation",
+  "pos": "n.",
+  "meaning": "航空"
+ },
+ {
+  "unit": 12,
+  "word": "royalty",
+  "pos": "n.",
+  "meaning": "王权，王室"
+ },
+ {
+  "unit": 12,
+  "word": "ritual",
+  "pos": "n.",
+  "meaning": "仪式"
+ },
+ {
+  "unit": 12,
+  "word": "accessory",
+  "pos": "n.",
+  "meaning": "附件"
+ },
+ {
+  "unit": 12,
+  "word": "turquoise",
+  "pos": "n.",
+  "meaning": "绿松石"
+ },
+ {
+  "unit": 12,
+  "word": "play",
+  "pos": "v.",
+  "meaning": "弹奏，玩耍"
+ },
+ {
+  "unit": 12,
+  "word": "prayer",
+  "pos": "n.",
+  "meaning": "祈祷"
+ },
+ {
+  "unit": 12,
+  "word": "parade",
+  "pos": "n./v.",
+  "meaning": "游行"
+ },
+ {
+  "unit": 12,
+  "word": "tough",
+  "pos": "adj.",
+  "meaning": "坚韧的"
+ },
+ {
+  "unit": 12,
+  "word": "toughness",
+  "pos": "n.",
+  "meaning": "韧性"
+ },
+ {
+  "unit": 12,
+  "word": "adorn",
+  "pos": "v.",
+  "meaning": "装饰"
+ },
+ {
+  "unit": 12,
+  "word": "tomb",
+  "pos": "n.",
+  "meaning": "坟墓"
+ },
+ {
+  "unit": 12,
+  "word": "imminent",
+  "pos": "adj.",
+  "meaning": "逼近的"
+ },
+ {
+  "unit": 12,
+  "word": "pilot",
+  "pos": "n.",
+  "meaning": "飞行员"
+ },
+ {
+  "unit": 12,
+  "word": "attendant",
+  "pos": "n.",
+  "meaning": "服务员"
+ },
+ {
+  "unit": 13,
+  "word": "incessant",
+  "pos": "adj.",
+  "meaning": "不停的"
+ },
+ {
+  "unit": 13,
+  "word": "discontent",
+  "pos": "n.",
+  "meaning": "不满"
+ },
+ {
+  "unit": 13,
+  "word": "bleak",
+  "pos": "adj.",
+  "meaning": "荒凉的"
+ },
+ {
+  "unit": 13,
+  "word": "outlook",
+  "pos": "n.",
+  "meaning": "前景"
+ },
+ {
+  "unit": 13,
+  "word": "surgery",
+  "pos": "n.",
+  "meaning": "外科，手术"
+ },
+ {
+  "unit": 13,
+  "word": "cosmetic",
+  "pos": "adj.",
+  "meaning": "美容的"
+ },
+ {
+  "unit": 13,
+  "word": "bruise",
+  "pos": "v./n.",
+  "meaning": "擦伤"
+ },
+ {
+  "unit": 13,
+  "word": "megastar",
+  "pos": "n.",
+  "meaning": "超级巨星"
+ },
+ {
+  "unit": 13,
+  "word": "starve",
+  "pos": "v.",
+  "meaning": "挨饿"
+ },
+ {
+  "unit": 13,
+  "word": "interrupt",
+  "pos": "v.",
+  "meaning": "打断"
+ },
+ {
+  "unit": 13,
+  "word": "nerve",
+  "pos": "n.",
+  "meaning": "神经"
+ },
+ {
+  "unit": 13,
+  "word": "pulse",
+  "pos": "n.",
+  "meaning": "脉搏"
+ },
+ {
+  "unit": 13,
+  "word": "muscle",
+  "pos": "n.",
+  "meaning": "肌肉"
+ },
+ {
+  "unit": 13,
+  "word": "exhale",
+  "pos": "v.",
+  "meaning": "呼出"
+ },
+ {
+  "unit": 13,
+  "word": "slender",
+  "pos": "adj.",
+  "meaning": "苗条的"
+ },
+ {
+  "unit": 13,
+  "word": "odour",
+  "pos": "n.",
+  "meaning": "气味"
+ },
+ {
+  "unit": 13,
+  "word": "posture",
+  "pos": "n.",
+  "meaning": "姿势"
+ },
+ {
+  "unit": 13,
+  "word": "inject",
+  "pos": "v.",
+  "meaning": "注射"
+ },
+ {
+  "unit": 13,
+  "word": "paralyse",
+  "pos": "v.",
+  "meaning": "使…无力，麻痹"
+ },
+ {
+  "unit": 13,
+  "word": "intensity",
+  "pos": "n.",
+  "meaning": "强烈"
+ },
+ {
+  "unit": 13,
+  "word": "reverse",
+  "pos": "v./n.",
+  "meaning": "颠倒，反向"
+ },
+ {
+  "unit": 13,
+  "word": "reserve",
+  "pos": "v./n.",
+  "meaning": "保留，预订"
+ },
+ {
+  "unit": 13,
+  "word": "limb",
+  "pos": "n.",
+  "meaning": "手臂，肢"
+ },
+ {
+  "unit": 13,
+  "word": "oppose",
+  "pos": "v.",
+  "meaning": "反抗"
+ },
+ {
+  "unit": 13,
+  "word": "dental",
+  "pos": "adj.",
+  "meaning": "牙齿的"
+ },
+ {
+  "unit": 13,
+  "word": "floss",
+  "pos": "n.",
+  "meaning": "丝绵，牙线"
+ },
+ {
+  "unit": 14,
+  "word": "suppose",
+  "pos": "v.",
+  "meaning": "假设"
+ },
+ {
+  "unit": 14,
+  "word": "standpoint",
+  "pos": "n.",
+  "meaning": "立场"
+ },
+ {
+  "unit": 14,
+  "word": "rank",
+  "pos": "n./v.",
+  "meaning": "等级，排档；排列"
+ },
+ {
+  "unit": 14,
+  "word": "contradict",
+  "pos": "v.",
+  "meaning": "反驳"
+ },
+ {
+  "unit": 14,
+  "word": "coverage",
+  "pos": "n.",
+  "meaning": "覆盖，报道"
+ },
+ {
+  "unit": 14,
+  "word": "flock to",
+  "pos": "phr.",
+  "meaning": "涌入"
+ },
+ {
+  "unit": 14,
+  "word": "volcano",
+  "pos": "n.",
+  "meaning": "火山"
+ },
+ {
+  "unit": 14,
+  "word": "tragedy",
+  "pos": "n.",
+  "meaning": "悲剧"
+ },
+ {
+  "unit": 14,
+  "word": "eruption",
+  "pos": "n.",
+  "meaning": "爆发"
+ },
+ {
+  "unit": 14,
+  "word": "repetition",
+  "pos": "n.",
+  "meaning": "重复"
+ },
+ {
+  "unit": 14,
+  "word": "welfare",
+  "pos": "n.",
+  "meaning": "福祉"
+ },
+ {
+  "unit": 14,
+  "word": "hurricane",
+  "pos": "n.",
+  "meaning": "飓风"
+ },
+ {
+  "unit": 14,
+  "word": "estimate",
+  "pos": "v./n.",
+  "meaning": "估计"
+ },
+ {
+  "unit": 14,
+  "word": "damage",
+  "pos": "v./n.",
+  "meaning": "损害"
+ },
+ {
+  "unit": 14,
+  "word": "unit",
+  "pos": "n.",
+  "meaning": "单位"
+ },
+ {
+  "unit": 14,
+  "word": "organisation",
+  "pos": "n.",
+  "meaning": "组织"
+ },
+ {
+  "unit": 14,
+  "word": "interest",
+  "pos": "n.",
+  "meaning": "利益，兴趣"
+ },
+ {
+  "unit": 14,
+  "word": "image",
+  "pos": "n.",
+  "meaning": "形象，图像"
+ },
+ {
+  "unit": 14,
+  "word": "allocate",
+  "pos": "v.",
+  "meaning": "分配"
+ },
+ {
+  "unit": 14,
+  "word": "divert",
+  "pos": "v.",
+  "meaning": "转向"
+ },
+ {
+  "unit": 14,
+  "word": "receipt",
+  "pos": "n.",
+  "meaning": "收据，收到"
+ },
+ {
+  "unit": 14,
+  "word": "criticism",
+  "pos": "n.",
+  "meaning": "批评"
+ },
+ {
+  "unit": 14,
+  "word": "mishandle",
+  "pos": "v.",
+  "meaning": "处理不当"
+ },
+ {
+  "unit": 14,
+  "word": "catastrophe",
+  "pos": "n.",
+  "meaning": "灾难"
+ },
+ {
+  "unit": 14,
+  "word": "performance",
+  "pos": "n.",
+  "meaning": "成效，表演"
+ },
+ {
+  "unit": 14,
+  "word": "classify",
+  "pos": "v.",
+  "meaning": "分类"
+ },
+ {
+  "unit": 14,
+  "word": "severity",
+  "pos": "n.",
+  "meaning": "严重"
+ },
+ {
+  "unit": 14,
+  "word": "scroll",
+  "pos": "v./n.",
+  "meaning": "滚动"
+ },
+ {
+  "unit": 14,
+  "word": "tap",
+  "pos": "v./n.",
+  "meaning": "点击"
+ },
+ {
+  "unit": 14,
+  "word": "zoom in",
+  "pos": "phr.",
+  "meaning": "放大"
+ },
+ {
+  "unit": 14,
+  "word": "edit",
+  "pos": "v.",
+  "meaning": "编辑"
+ },
+ {
+  "unit": 14,
+  "word": "crop",
+  "pos": "v./n.",
+  "meaning": "裁剪；作物"
+ },
+ {
+  "unit": 15,
+  "word": "hybrid",
+  "pos": "n./adj.",
+  "meaning": "混合（物）"
+ },
+ {
+  "unit": 15,
+  "word": "parallel",
+  "pos": "n./v.",
+  "meaning": "平行；对比"
+ },
+ {
+  "unit": 15,
+  "word": "leak",
+  "pos": "v./n.",
+  "meaning": "泄露；漏洞"
+ },
+ {
+  "unit": 15,
+  "word": "fluid",
+  "pos": "n./adj.",
+  "meaning": "流体"
+ },
+ {
+  "unit": 15,
+  "word": "rubber",
+  "pos": "n.",
+  "meaning": "橡胶，橡皮"
+ },
+ {
+  "unit": 15,
+  "word": "motor",
+  "pos": "n.",
+  "meaning": "发动机"
+ },
+ {
+  "unit": 15,
+  "word": "tank",
+  "pos": "n.",
+  "meaning": "坦克，水箱"
+ },
+ {
+  "unit": 15,
+  "word": "differentiate",
+  "pos": "v.",
+  "meaning": "区别"
+ },
+ {
+  "unit": 15,
+  "word": "scarify",
+  "pos": "v.",
+  "meaning": "划破，乱划"
+ },
+ {
+  "unit": 15,
+  "word": "crank",
+  "pos": "n.",
+  "meaning": "曲柄"
+ },
+ {
+  "unit": 15,
+  "word": "energy",
+  "pos": "n.",
+  "meaning": "精力，能量"
+ },
+ {
+  "unit": 15,
+  "word": "source",
+  "pos": "n.",
+  "meaning": "起源，来源"
+ },
+ {
+  "unit": 15,
+  "word": "hustle",
+  "pos": "n./v.",
+  "meaning": "喧哗；催促"
+ },
+ {
+  "unit": 15,
+  "word": "skeleton",
+  "pos": "n.",
+  "meaning": "骨架"
+ },
+ {
+  "unit": 15,
+  "word": "conceal",
+  "pos": "v.",
+  "meaning": "隐藏"
+ },
+ {
+  "unit": 15,
+  "word": "affectional",
+  "pos": "adj.",
+  "meaning": "情感上的"
+ },
+ {
+  "unit": 15,
+  "word": "inscription",
+  "pos": "n.",
+  "meaning": "题字"
+ },
+ {
+  "unit": 15,
+  "word": "cliff",
+  "pos": "n.",
+  "meaning": "悬崖绝壁"
+ },
+ {
+  "unit": 15,
+  "word": "productive",
+  "pos": "adj.",
+  "meaning": "多产的"
+ },
+ {
+  "unit": 15,
+  "word": "emigrate",
+  "pos": "v.",
+  "meaning": "移居（出国）"
+ },
+ {
+  "unit": 15,
+  "word": "immigrate",
+  "pos": "v.",
+  "meaning": "移入"
+ },
+ {
+  "unit": 15,
+  "word": "collapse",
+  "pos": "v./n.",
+  "meaning": "倒塌"
+ },
+ {
+  "unit": 15,
+  "word": "rest",
+  "pos": "n.",
+  "meaning": "剩余部分"
+ },
+ {
+  "unit": 15,
+  "word": "condition",
+  "pos": "n.",
+  "meaning": "条件"
+ },
+ {
+  "unit": 15,
+  "word": "angle",
+  "pos": "n.",
+  "meaning": "角度"
+ },
+ {
+  "unit": 15,
+  "word": "breeze",
+  "pos": "n.",
+  "meaning": "微风"
+ },
+ {
+  "unit": 15,
+  "word": "cement",
+  "pos": "n.",
+  "meaning": "水泥，接合剂"
+ },
+ {
+  "unit": 15,
+  "word": "statistic",
+  "pos": "n.",
+  "meaning": "统计量"
+ },
+ {
+  "unit": 15,
+  "word": "justification",
+  "pos": "n.",
+  "meaning": "理由"
+ },
+ {
+  "unit": 15,
+  "word": "construction",
+  "pos": "n.",
+  "meaning": "建筑物，建设"
+ },
+ {
+  "unit": 15,
+  "word": "pump",
+  "pos": "v./n.",
+  "meaning": "抽水；泵"
+ },
+ {
+  "unit": 15,
+  "word": "feature",
+  "pos": "n./v.",
+  "meaning": "容貌，特色；起重要作用"
+ },
+ {
+  "unit": 15,
+  "word": "prior",
+  "pos": "adj.",
+  "meaning": "在前的"
+ },
+ {
+  "unit": 15,
+  "word": "prime",
+  "pos": "adj.",
+  "meaning": "基本的，首要的"
+ },
+ {
+  "unit": 15,
+  "word": "department",
+  "pos": "n.",
+  "meaning": "部门"
+ },
+ {
+  "unit": 15,
+  "word": "departure",
+  "pos": "n.",
+  "meaning": "离开"
+ },
+ {
+  "unit": 15,
+  "word": "civilian",
+  "pos": "n.",
+  "meaning": "平民"
+ },
+ {
+  "unit": 15,
+  "word": "invest",
+  "pos": "v.",
+  "meaning": "投资"
+ },
+ {
+  "unit": 15,
+  "word": "devastate",
+  "pos": "v.",
+  "meaning": "毁坏"
+ },
+ {
+  "unit": 15,
+  "word": "burst",
+  "pos": "v./n.",
+  "meaning": "爆发"
+ },
+ {
+  "unit": 15,
+  "word": "ventilation",
+  "pos": "n.",
+  "meaning": "通风"
+ },
+ {
+  "unit": 15,
+  "word": "skull",
+  "pos": "n.",
+  "meaning": "头盖骨"
+ },
+ {
+  "unit": 15,
+  "word": "sculpt",
+  "pos": "v.",
+  "meaning": "雕刻"
+ },
+ {
+  "unit": 15,
+  "word": "generate",
+  "pos": "v.",
+  "meaning": "使形成，生殖"
+ },
+ {
+  "unit": 15,
+  "word": "delicate",
+  "pos": "adj.",
+  "meaning": "微妙的，精致的"
+ },
+ {
+  "unit": 15,
+  "word": "mummy",
+  "pos": "n.",
+  "meaning": "木乃伊"
+ },
+ {
+  "unit": 15,
+  "word": "specialize",
+  "pos": "v.",
+  "meaning": "专门从事"
+ },
+ {
+  "unit": 16,
+  "word": "flat",
+  "pos": "adj.",
+  "meaning": "平坦的"
+ },
+ {
+  "unit": 16,
+  "word": "chap",
+  "pos": "n.",
+  "meaning": "皲裂"
+ },
+ {
+  "unit": 16,
+  "word": "prospect",
+  "pos": "n.",
+  "meaning": "希望，前景"
+ },
+ {
+  "unit": 16,
+  "word": "trend",
+  "pos": "n.",
+  "meaning": "趋势"
+ },
+ {
+  "unit": 16,
+  "word": "identical",
+  "pos": "adj.",
+  "meaning": "同一的"
+ },
+ {
+  "unit": 16,
+  "word": "suburb",
+  "pos": "n.",
+  "meaning": "郊区"
+ },
+ {
+  "unit": 16,
+  "word": "steam",
+  "pos": "v./n.",
+  "meaning": "蒸发；蒸汽"
+ },
+ {
+  "unit": 16,
+  "word": "strategy",
+  "pos": "n.",
+  "meaning": "战略"
+ },
+ {
+  "unit": 16,
+  "word": "fade",
+  "pos": "n./v.",
+  "meaning": "褪色"
+ },
+ {
+  "unit": 16,
+  "word": "tuition",
+  "pos": "n.",
+  "meaning": "学费"
+ },
+ {
+  "unit": 16,
+  "word": "trigger",
+  "pos": "v./n.",
+  "meaning": "触发；扳机"
+ },
+ {
+  "unit": 16,
+  "word": "moderate",
+  "pos": "adj.",
+  "meaning": "适宜的，适度的"
+ },
+ {
+  "unit": 16,
+  "word": "perceive",
+  "pos": "v.",
+  "meaning": "察觉"
+ },
+ {
+  "unit": 16,
+  "word": "acuity",
+  "pos": "n.",
+  "meaning": "尖锐，敏锐"
+ },
+ {
+  "unit": 16,
+  "word": "swift",
+  "pos": "adj.",
+  "meaning": "快的"
+ },
+ {
+  "unit": 16,
+  "word": "mayor",
+  "pos": "n.",
+  "meaning": "市长"
+ },
+ {
+  "unit": 16,
+  "word": "panel",
+  "pos": "n.",
+  "meaning": "仪表盘，座谈小组"
+ },
+ {
+  "unit": 16,
+  "word": "rugged",
+  "pos": "adj.",
+  "meaning": "粗糙的，坚固的"
+ },
+ {
+  "unit": 16,
+  "word": "hurdle",
+  "pos": "n.",
+  "meaning": "障碍"
+ },
+ {
+  "unit": 16,
+  "word": "respect",
+  "pos": "n./v.",
+  "meaning": "尊重"
+ },
+ {
+  "unit": 16,
+  "word": "commence",
+  "pos": "v.",
+  "meaning": "开始，着手"
+ },
+ {
+  "unit": 16,
+  "word": "client",
+  "pos": "n.",
+  "meaning": "客户"
+ },
+ {
+  "unit": 16,
+  "word": "culminate",
+  "pos": "v.",
+  "meaning": "达到极点"
+ },
+ {
+  "unit": 16,
+  "word": "upfront",
+  "pos": "adj./adv.",
+  "meaning": "在前面的；提前"
+ },
+ {
+  "unit": 16,
+  "word": "criticise",
+  "pos": "v.",
+  "meaning": "批评"
+ },
+ {
+  "unit": 16,
+  "word": "dual",
+  "pos": "adj.",
+  "meaning": "双的"
+ },
+ {
+  "unit": 16,
+  "word": "consolation",
+  "pos": "n.",
+  "meaning": "安慰"
+ },
+ {
+  "unit": 16,
+  "word": "lend",
+  "pos": "v.",
+  "meaning": "借"
+ },
+ {
+  "unit": 16,
+  "word": "demolish",
+  "pos": "v.",
+  "meaning": "摧毁"
+ },
+ {
+  "unit": 16,
+  "word": "stimulus",
+  "pos": "n.",
+  "meaning": "刺激"
+ },
+ {
+  "unit": 16,
+  "word": "dump",
+  "pos": "v.",
+  "meaning": "倾倒"
+ },
+ {
+  "unit": 16,
+  "word": "spectator",
+  "pos": "n.",
+  "meaning": "观众"
+ },
+ {
+  "unit": 16,
+  "word": "civic",
+  "pos": "n./adj.",
+  "meaning": "公民；市民的"
+ },
+ {
+  "unit": 16,
+  "word": "iconic image",
+  "pos": "phr.",
+  "meaning": "标志性形象"
+ }
+]
