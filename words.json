@@ -3814,5 +3814,323 @@
   "word": "iconic image",
   "pos": "phr.",
   "meaning": "标志性形象"
+ },
+ {
+  "unit": 17,
+  "word": "reproductive",
+  "pos": "adj.",
+  "meaning": "生殖的；繁殖的"
+ },
+ {
+  "unit": 17,
+  "word": "integral",
+  "pos": "adj.",
+  "meaning": "不可或缺的；完整的"
+ },
+ {
+  "unit": 17,
+  "word": "spotty",
+  "pos": "adj.",
+  "meaning": "有斑点的；参差不齐的"
+ },
+ {
+  "unit": 17,
+  "word": "immobility",
+  "pos": "n.",
+  "meaning": "不能移动；静止"
+ },
+ {
+  "unit": 17,
+  "word": "spongy",
+  "pos": "adj.",
+  "meaning": "海绵状的；松软的"
+ },
+ {
+  "unit": 17,
+  "word": "apart from",
+  "pos": "phr.",
+  "meaning": "除…之外"
+ },
+ {
+  "unit": 17,
+  "word": "deficiency",
+  "pos": "n.",
+  "meaning": "缺乏；不足"
+ },
+ {
+  "unit": 17,
+  "word": "primate",
+  "pos": "n.",
+  "meaning": "灵长类动物"
+ },
+ {
+  "unit": 17,
+  "word": "valid",
+  "pos": "adj.",
+  "meaning": "有效的；有根据的"
+ },
+ {
+  "unit": 17,
+  "word": "suppress",
+  "pos": "v.",
+  "meaning": "镇压；抑制"
+ },
+ {
+  "unit": 17,
+  "word": "mammal",
+  "pos": "n.",
+  "meaning": "哺乳动物"
+ },
+ {
+  "unit": 17,
+  "word": "cornerstone",
+  "pos": "n.",
+  "meaning": "奠基石；基础"
+ },
+ {
+  "unit": 17,
+  "word": "acquire",
+  "pos": "v.",
+  "meaning": "获得；习得"
+ },
+ {
+  "unit": 17,
+  "word": "immunity",
+  "pos": "n.",
+  "meaning": "免疫力；豁免"
+ },
+ {
+  "unit": 17,
+  "word": "inoculated",
+  "pos": "adj.",
+  "meaning": "已接种疫苗的；已预防注射的"
+ },
+ {
+  "unit": 17,
+  "word": "virus",
+  "pos": "n.",
+  "meaning": "病毒"
+ },
+ {
+  "unit": 17,
+  "word": "devastate",
+  "pos": "v.",
+  "meaning": "摧毁；毁灭"
+ },
+ {
+  "unit": 17,
+  "word": "organ",
+  "pos": "n.",
+  "meaning": "器官；机构"
+ },
+ {
+  "unit": 17,
+  "word": "tissue",
+  "pos": "n.",
+  "meaning": "组织；纸巾"
+ },
+ {
+  "unit": 17,
+  "word": "lung",
+  "pos": "n.",
+  "meaning": "肺"
+ },
+ {
+  "unit": 17,
+  "word": "pave",
+  "pos": "v.",
+  "meaning": "铺设；为…铺路"
+ },
+ {
+  "unit": 17,
+  "word": "detrimental",
+  "pos": "adj.",
+  "meaning": "有害的；不利的"
+ },
+ {
+  "unit": 17,
+  "word": "germ",
+  "pos": "n.",
+  "meaning": "细菌；病菌"
+ },
+ {
+  "unit": 17,
+  "word": "extent",
+  "pos": "n.",
+  "meaning": "程度；范围"
+ },
+ {
+  "unit": 17,
+  "word": "beyond",
+  "pos": "prep./adv.",
+  "meaning": "越过；超出"
+ },
+ {
+  "unit": 17,
+  "word": "status",
+  "pos": "n.",
+  "meaning": "地位；状况"
+ },
+ {
+  "unit": 17,
+  "word": "murder",
+  "pos": "n./v.",
+  "meaning": "谋杀；凶杀"
+ },
+ {
+  "unit": 17,
+  "word": "enemy",
+  "pos": "n.",
+  "meaning": "敌人"
+ },
+ {
+  "unit": 17,
+  "word": "royal",
+  "pos": "adj.",
+  "meaning": "王室的；皇家的"
+ },
+ {
+  "unit": 17,
+  "word": "humanitarian",
+  "pos": "adj./n.",
+  "meaning": "人道主义的；人道主义者"
+ },
+ {
+  "unit": 17,
+  "word": "take to",
+  "pos": "phr.",
+  "meaning": "开始从事；喜欢上"
+ },
+ {
+  "unit": 17,
+  "word": "evoke",
+  "pos": "v.",
+  "meaning": "引起；唤起"
+ },
+ {
+  "unit": 17,
+  "word": "glamour",
+  "pos": "n.",
+  "meaning": "魅力；诱惑力"
+ },
+ {
+  "unit": 17,
+  "word": "elegance",
+  "pos": "n.",
+  "meaning": "优雅；典雅"
+ },
+ {
+  "unit": 17,
+  "word": "depict",
+  "pos": "v.",
+  "meaning": "描绘；描述"
+ },
+ {
+  "unit": 17,
+  "word": "pharaoh",
+  "pos": "n.",
+  "meaning": "法老"
+ },
+ {
+  "unit": 17,
+  "word": "profile",
+  "pos": "n./v.",
+  "meaning": "简介；印象；侧面轮廓"
+ },
+ {
+  "unit": 17,
+  "word": "relegate",
+  "pos": "v.",
+  "meaning": "归入；贬职"
+ },
+ {
+  "unit": 17,
+  "word": "carve",
+  "pos": "v.",
+  "meaning": "雕刻；切"
+ },
+ {
+  "unit": 17,
+  "word": "crown",
+  "pos": "n./v.",
+  "meaning": "王冠；王权"
+ },
+ {
+  "unit": 17,
+  "word": "handicapped",
+  "pos": "adj.",
+  "meaning": "残疾的；有障碍的"
+ },
+ {
+  "unit": 17,
+  "word": "deformities",
+  "pos": "n.",
+  "meaning": "畸形；缺陷"
+ },
+ {
+  "unit": 17,
+  "word": "take charge of",
+  "pos": "phr.",
+  "meaning": "负责；掌管；照顾"
+ },
+ {
+  "unit": 17,
+  "word": "force",
+  "pos": "n./v.",
+  "meaning": "武力；力量；强迫"
+ },
+ {
+  "unit": 17,
+  "word": "religious",
+  "pos": "adj.",
+  "meaning": "宗教的；虔诚的"
+ },
+ {
+  "unit": 17,
+  "word": "revere",
+  "pos": "v.",
+  "meaning": "尊敬；崇敬"
+ },
+ {
+  "unit": 17,
+  "word": "dedicate",
+  "pos": "v.",
+  "meaning": "献身；奉献"
+ },
+ {
+  "unit": 17,
+  "word": "majesty",
+  "pos": "n.",
+  "meaning": "威严；雄伟"
+ },
+ {
+  "unit": 17,
+  "word": "initiative",
+  "pos": "n.",
+  "meaning": "主动性；首创精神；倡议"
+ },
+ {
+  "unit": 17,
+  "word": "dialogue",
+  "pos": "n.",
+  "meaning": "对话；对白"
+ },
+ {
+  "unit": 17,
+  "word": "foster",
+  "pos": "v.",
+  "meaning": "促进；培养；抚育"
+ },
+ {
+  "unit": 17,
+  "word": "addresses",
+  "pos": "v./n.",
+  "meaning": "演讲；地址（复数）"
+ },
+ {
+  "unit": 17,
+  "word": "enormous",
+  "pos": "adj.",
+  "meaning": "巨大的；庞大的"
  }
 ]

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>分享 · 单词听写</title>
 <meta property="og:title" content="单词听写 · 智能听写模式">
-<meta property="og:description" content="636 词 · 多种中文意思 · 美音英音 · 智能批改 · 错词本">
+<meta property="og:description" content="689 词 · 多种中文意思 · 美音英音 · 智能批改 · 错词本">
 <meta property="og:image" content="https://roubizhao6-sys.github.io/word-dictation/og-image.png">
 <style>
 :root{--o:#ff7a45;--tx:#2b2b2b;--t2:#8a8a8a;--line:#ececec}
@@ -32,7 +32,7 @@ button{width:100%;border:none;border-radius:12px;padding:14px;font-size:15.5px;f
 <div class="card">
   <div class="logo"><svg viewBox="0 0 64 64"><path d="M16 14h26a7 7 0 017 7v30H23a7 7 0 01-7-7z" fill="#fff"/><path d="M24 25h16M24 33h16M24 41h10" stroke="#ff7a45" stroke-width="3.2" stroke-linecap="round"/></svg></div>
   <h1>单词听写 · 智能听写模式</h1>
-  <p class="sub">636 词 · 多种中文意思 · 美音英音 · 智能批改</p>
+  <p class="sub">689 词 · 多种中文意思 · 美音英音 · 智能批改</p>
   <div class="qr"><img src="qr.png" alt="扫码打开"></div>
   <div class="url" id="url">https://roubizhao6-sys.github.io/word-dictation/</div>
   <button class="primary" id="share">分享给同学</button>
@@ -42,7 +42,7 @@ button{width:100%;border:none;border-radius:12px;padding:14px;font-size:15.5px;f
 <script>
 const URL='https://roubizhao6-sys.github.io/word-dictation/';
 document.getElementById('share').onclick=async()=>{
-  const data={title:'单词听写 · 智能听写模式',text:'636 个单词 · 多种中文意思 · 美音英音 · 听音写词智能批改',url:URL};
+  const data={title:'单词听写 · 智能听写模式',text:'689 个单词 · 多种中文意思 · 美音英音 · 听音写词智能批改',url:URL};
   if(navigator.share){ try{ await navigator.share(data); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
   try{ await navigator.clipboard.writeText(URL); alert('链接已复制，去粘贴分享吧'); }catch(e){ prompt('复制链接：',URL); }
 };
