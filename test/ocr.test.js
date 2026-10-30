@@ -299,7 +299,8 @@ test('frontend calls a configurable Worker URL instead of Vercel', () => {
   assert.doesNotMatch(html, /vercel/i);
   assert.doesNotMatch(html, /\/api\/ocr/);
   assert.match(config, /window\.OCR_API_URL/);
-  assert.match(config, /YOUR_SUBDOMAIN\.workers\.dev/);
+  assert.match(config, /window\.OCR_API_URL\s*=\s*"https:\/\/word-dictation-ocr\.roubizhao6\.workers\.dev"/);
+  assert.doesNotMatch(config, /window\.OCR_API_URL\s*=\s*["'][^"']*YOUR_SUBDOMAIN/);
   assert.match(config, /https:\/\/roubizhao6-sys\.github\.io/);
   assert.doesNotMatch(config, /AIza|GOCSPX|ya29\./);
   assert.match(readme, /wrangler secret put GOOGLE_VISION_API_KEY/);
