@@ -21,6 +21,7 @@
 <meta name="apple-mobile-web-app-title" content="单词听写">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="og-image.png">
+<script src="books/calculus.js"></script>
 <style>
 :root{
   --orange:#ff7a45; --orange-d:#f2653a; --orange-l:#fff1ea;
@@ -204,6 +205,7 @@ html[data-theme="dark"] #toast{background:#16281f;color:#7fd7a6;border-color:#24
 .wlsenses{margin-top:3px;display:flex;flex-direction:column;gap:1px}
 .wlsenses div{font-size:13.5px;color:var(--tx2);line-height:1.55}
 .wlsenses b{color:var(--tx);font-weight:600;margin-right:5px}
+.wlctx{margin-top:3px;font-size:12px;color:var(--tx3);line-height:1.45}
 .wlrow:hover{background:var(--bg3)}
 .wlrow.playing{background:var(--orange-l)}
 .wlrow.playing .wlw{color:var(--orange)}
@@ -444,10 +446,43 @@ const sfx={
 /* ---------- 发音 ---------- */
 let curAudio=null, speakTimer=null;
 function hasRecording(w){
-  return !!(w&&w.id&&!w.custom&&/^\d+$/.test(String(w.id)));
+  if(!w) return false;
+  if(w.audioLocal) return true;
+  return !!(w.id&&!w.custom&&/^\d+$/.test(String(w.id)));
+}
+function decodeAudioUrl(raw){
+  return String(raw||'')
+    .replace(/&amp;/gi,'&')
+    .replace(/&quot;/gi,'"')
+    .replace(/&#0*39;/g,"'")
+    .replace(/&lt;/gi,'<')
+    .replace(/&gt;/gi,'>')
+    .trim();
+}
+function playCandidates(w){
+  const list=audioCandidates(w,S.set.accent).map(url=>({url,remote:false}));
+  if(w&&w.audioLocal) list.push({url:w.audioLocal,remote:false});
+  const remote=decodeAudioUrl(w&&w.audio);
+  if(/^https?:\/\//i.test(remote)) list.push({url:remote,remote:true});
+  return list;
+}
+function playBlobUrl(url,after,fail){
+  fetch(url).then(r=>{ if(!r.ok) throw new Error('audio'); return r.blob(); }).then(blob=>{
+    if(!blob||!blob.size) throw new Error('empty');
+    const obj=URL.createObjectURL(blob);
+    const a=new Audio(obj);
+    curAudio=a;
+    a.playbackRate=Math.max(0.5,Math.min(1.5,S.set.speed));
+    const done=()=>{ URL.revokeObjectURL(obj); after(); };
+    const bad=()=>{ URL.revokeObjectURL(obj); fail(); };
+    a.onended=done;
+    a.onerror=bad;
+    const pr=a.play();
+    if(pr&&pr.catch) pr.catch(bad);
+  }).catch(()=>fail());
 }
 function audioCandidates(w,accent){
-  if(!hasRecording(w)) return [];
+  if(!(w&&w.id&&!w.custom&&/^\d+$/.test(String(w.id)))) return [];
   const id=w.id, tag=(accent==='us'?'us':'uk');
   return [`audio/${id}_${tag}.mp3`,`audio/${id}_${tag}.m4a`];   // 个别词只有系统语音合成的 m4a
 }
@@ -471,8 +506,9 @@ function stopAudio(){
 /* 播放单词音频 times 遍 */
 function playWord(w,times,cb){
   stopAudio();
+  if(!w){ cb&&cb(); return; }
   times=times||S.set.repeat||1;
-  const cands=audioCandidates(w,S.set.accent);
+  const cands=playCandidates(w);
   let n=0;
   const once=()=>{
     if(n>=times){ cb&&cb(); return; }
@@ -481,13 +517,21 @@ function playWord(w,times,cb){
     const after=()=>{ if(settled) return; settled=true; speakTimer=setTimeout(once, n<times?320:0); };
     const attempt=()=>{
       if(settled) return;
-      if(ci>=cands.length){ ttsPlay(w.word,after); return; }   // 录音都没有 → 系统语音
-      const a=new Audio(cands[ci++]);
+      if(ci>=cands.length){ ttsPlay(w.speak||w.word,after); return; }
+      const cand=cands[ci++];
+      let advanced=false;
+      const next=()=>{ if(settled||advanced) return; advanced=true; attempt(); };
+      const remoteThenNext=()=>{
+        if(settled||advanced) return;
+        advanced=true;
+        playBlobUrl(cand.url,after,()=>{ advanced=false; attempt(); });
+      };
+      const a=new Audio(cand.url);
       curAudio=a; a.playbackRate=Math.max(0.5,Math.min(1.5,S.set.speed));
       a.onended=after;
-      a.onerror=()=>{ if(!settled){ a.onerror=null; attempt(); } };
+      a.onerror=()=>{ a.onerror=null; if(cand.remote) remoteThenNext(); else next(); };
       const pr=a.play();
-      if(pr&&pr.catch) pr.catch(()=>{ if(!settled){ a.onerror=null; attempt(); } });
+      if(pr&&pr.catch) pr.catch(()=>{ a.onerror=null; if(cand.remote) remoteThenNext(); else next(); });
     };
     attempt();
   };
@@ -528,6 +572,67 @@ function syllables(word){
 /* ---------- 随机 ---------- */
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 function pick(arr,n,exclude){const out=[];const pool=arr.filter(x=>x!==exclude);shuffle(pool);for(let i=0;i<n&&i<pool.length;i++)out.push(pool[i]);return out;}
+function builtinBooks(){
+  const list=window.BUILTIN_BOOKS;
+  return Array.isArray(list)?list.filter(b=>b&&b.id&&Array.isArray(b.words)&&b.words.length):[];
+}
+function bookRef(id,i){ return 'b:'+id+':'+i; }
+function parseBookRef(ref){
+  const m=/^b:([A-Za-z0-9_-]+):(\d+)$/.exec(String(ref==null?'':ref));
+  if(!m) return null;
+  const book=builtinBooks().find(b=>b.id===m[1]);
+  if(!book) return null;
+  const i=+m[2];
+  if(!book.words[i]) return null;
+  return {book,i,w:book.words[i]};
+}
+function refOf(v){
+  const s=String(v==null?'':v);
+  if(/^b:[A-Za-z0-9_-]+:\d+$/.test(s)) return s;
+  if(/^\d+$/.test(s)) return +s;
+  return s;
+}
+function wordByRef(ref){
+  if(ref==null||ref==='') return null;
+  const hit=parseBookRef(ref);
+  if(hit) return hit.w;
+  const n=typeof ref==='number'?ref:+ref;
+  return Number.isInteger(n)&&n>=0?WORDS[n]:null;
+}
+function activeBuiltinBook(){
+  return builtinBooks().find(b=>b.id===wl.book)||null;
+}
+function bookFromLocation(){
+  let id='';
+  try{ id=new URLSearchParams(location.search).get('book')||''; }catch(e){}
+  if(!id && location.hash){
+    try{ id=decodeURIComponent(location.hash.slice(1)); }catch(e){ id=location.hash.slice(1); }
+  }
+  if(id==='list') return '';
+  return builtinBooks().some(b=>b.id===id)?id:'';
+}
+function openBuiltinBook(id){
+  if(!builtinBooks().some(b=>b.id===id)) return;
+  wl.book=id; wl.unit=0; wl.q=''; wl.limit=200; wl.auto=false; wl.cur=null;
+  stopAudio();
+  const next='#'+id;
+  if(location.hash!==next) history.replaceState(null,'',next);
+  renderHome('list');
+}
+function builtinBookCards(){
+  return builtinBooks().map(b=>`
+    <div class="bookbox" data-book="${esc(b.id)}">
+      <div class="emoji" aria-hidden="true">${esc(b.emoji||'📘')}</div>
+      <div style="flex:1;min-width:160px">
+        <div style="font-size:16px;font-weight:600">${esc(b.title)}</div>
+        <div class="sub">${esc(b.en||b.title)} · ${b.words.length} 词 · 点一行在本页发音</div>
+      </div>
+      <div class="bookacts">
+        <button class="btn primary" type="button" data-open-book="${esc(b.id)}">打开词表</button>
+        <button class="btn" type="button" data-drill-book="${esc(b.id)}">开始听写</button>
+      </div>
+    </div>`).join('');
+}
 </script>
 <script>
 /* =========================================================
@@ -535,8 +640,21 @@ function pick(arr,n,exclude){const out=[];const pool=arr.filter(x=>x!==exclude);
    ========================================================= */
 function units(){ const m={}; WORDS.forEach((w,i)=>{ if(w.hidden||w.unit===99) return; (m[w.unit]=m[w.unit]||[]).push(i)}); return m; }
 function unitProgress(list){ let done=0,mastered=0; list.forEach(i=>{const p=S.prog[i];if(p){if(p.ok||p.wrong)done++;if(p.lv>=5)mastered++;}}); return {done,mastered}; }
-function dueList(){ return WORDS.map((w,i)=>i).filter(i=>!WORDS[i].hidden&&isDue(i)).slice(0,Math.max(1,S.set.reviewLimit)); }
-function wrongList(){ return WORDS.map((w,i)=>i).filter(i=>!WORDS[i].hidden&&S.prog[i]&&S.prog[i].wrong>0).sort((a,b)=>S.prog[b].wrong-S.prog[a].wrong||S.prog[b].last-S.prog[a].last); }
+function bookEntries(){
+  const out=[];
+  builtinBooks().forEach(b=>b.words.forEach((w,i)=>{ if(!w.hidden) out.push(bookRef(b.id,i)); }));
+  return out;
+}
+function dueList(){
+  const base=WORDS.map((w,i)=>i).filter(i=>!WORDS[i].hidden&&isDue(i));
+  const extra=bookEntries().filter(isDue);
+  return base.concat(extra).slice(0,Math.max(1,S.set.reviewLimit));
+}
+function wrongList(){
+  const base=WORDS.map((w,i)=>i).filter(i=>!WORDS[i].hidden&&S.prog[i]&&S.prog[i].wrong>0);
+  const extra=bookEntries().filter(i=>S.prog[i]&&S.prog[i].wrong>0);
+  return base.concat(extra).sort((a,b)=>((S.prog[b]&&S.prog[b].wrong)||0)-((S.prog[a]&&S.prog[a].wrong)||0)||((S.prog[b]&&S.prog[b].last)||0)-((S.prog[a]&&S.prog[a].last)||0));
+}
 
 function formatName(name){
   const m=String(name||'').match(/^list_(\d+)$/);
@@ -591,6 +709,7 @@ function renderHome(tab){
           <button class="btn" id="quickOcr" type="button">拍照导入</button>
         </div>
       </div>
+      ${builtinBookCards()}
       <div class="sub" style="margin:14px 2px 0">练习方式</div>
       ${modeChipsHtml()}
       ${lastS?`<div class="rowset" style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:14px">
@@ -618,6 +737,8 @@ function renderHome(tab){
     });
     if($('#resumeBtn')) $('#resumeBtn').onclick=resumeSession;
     $$('.chapcard').forEach(c=>c.onclick=()=>startUnit(+c.dataset.u));
+    body.querySelectorAll('[data-open-book]').forEach(b=>b.onclick=()=>openBuiltinBook(b.dataset.openBook));
+    body.querySelectorAll('[data-drill-book]').forEach(b=>b.onclick=()=>startBuiltinBook(b.dataset.drillBook));
   }
   else if(tab==='list') renderWordTable(body);
   else if(tab==='mine') renderMine(body);
@@ -1143,9 +1264,19 @@ function exportAll(){
   setTimeout(()=>URL.revokeObjectURL(a.href),3000);
 }
 /* ---------- 单词表（全部单词，点一下即发音） ---------- */
-let wl={q:'',unit:0,auto:false,cur:null,limit:80};
+let wl={q:'',unit:0,auto:false,cur:null,limit:80,book:''};
 function wlFiltered(){
   const q=norm(wl.q);
+  const book=activeBuiltinBook();
+  if(book){
+    return book.words.map((_,i)=>bookRef(book.id,i)).filter(ref=>{
+      const w=wordByRef(ref);
+      if(!w) return false;
+      if(!q) return true;
+      const raw=wl.q.trim();
+      return norm(w.word).includes(q)||(w.meaning||'').includes(raw)||(w.ctx||'').includes(raw)||norm(w.speak||'').includes(q);
+    });
+  }
   return WORDS.map((w,i)=>i).filter(i=>{
     const w=WORDS[i];
     if(w.hidden) return false;
@@ -1156,19 +1287,30 @@ function wlFiltered(){
 }
 function renderWordTable(body){
   const chapterUnits=units();
+  const book=activeBuiltinBook();
+  const notebookCount=WORDS.filter(w=>!w.hidden&&w.unit!==99).length;
   body.innerHTML=`
     <div class="wlbar">
       <input type="text" id="wlq" placeholder="搜索单词 / 中文释义…" value="${esc(wl.q)}" aria-label="搜索单词">
-      <select id="wlu" aria-label="按页筛选"><option value="0">全部页</option>${Object.keys(chapterUnits).map(k=>`<option value="${k}" ${wl.unit==k?'selected':''}>第 ${k} 页（${chapterUnits[k].length}）</option>`).join('')}</select>
+      <select id="wlbook" aria-label="词书"><option value="" ${book?'':'selected'}>手写笔记本（${notebookCount}）</option>${builtinBooks().map(b=>`<option value="${esc(b.id)}" ${book&&book.id===b.id?'selected':''}>${esc(b.title)}（${b.words.length}）</option>`).join('')}</select>
+      ${book?'':`<select id="wlu" aria-label="按页筛选"><option value="0">全部页</option>${Object.keys(chapterUnits).map(k=>`<option value="${k}" ${wl.unit==k?'selected':''}>第 ${k} 页（${chapterUnits[k].length}）</option>`).join('')}</select>`}
       <div class="seg" role="group" aria-label="发音口音"><button type="button" data-acc="us" class="${S.set.accent==='us'?'on':''}">美音</button><button type="button" data-acc="uk" class="${S.set.accent==='uk'?'on':''}">英音</button></div>
       <button class="btn sm ${wl.auto?'primary':''}" id="wlauto" type="button">${wl.auto?'停止连播':'连播'}</button>
     </div>
-    <div class="sub" style="margin:8px 2px 6px">点一行就发音。共 <b id="wlc"></b> 个单词</div>
+    <div class="sub" style="margin:8px 2px 6px">${book?esc(book.en||book.title)+' · ':''}点一行就发音，不会打开新页面。共 <b id="wlc"></b> 个单词</div>
     <div id="wlrows"></div>`;
   paintRows();
   let wlTimer=null;
-  $('#wlq').oninput=e=>{ wl.q=e.target.value; wl.limit=80; clearTimeout(wlTimer); wlTimer=setTimeout(paintRows,120); };
-  $('#wlu').onchange=e=>{ wl.unit=+e.target.value; wl.limit=80; paintRows(); };
+  $('#wlq').oninput=e=>{ wl.q=e.target.value; if(!activeBuiltinBook()) wl.limit=80; clearTimeout(wlTimer); wlTimer=setTimeout(paintRows,120); };
+  if($('#wlu')) $('#wlu').onchange=e=>{ wl.unit=+e.target.value; wl.limit=80; paintRows(); };
+  const bookSel=$('#wlbook');
+  if(bookSel) bookSel.onchange=()=>{
+    wl.book=bookSel.value; wl.unit=0; wl.q=''; wl.cur=null; wl.auto=false; stopAudio();
+    wl.limit=wl.book?200:80;
+    const next=wl.book?'#'+wl.book:'';
+    if((location.hash||'')!==next) history.replaceState(null,'', next?next:(location.pathname+location.search));
+    renderWordTable(body);
+  };
   body.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{ S.set.accent=b.dataset.acc; save(); if(typeof syncAccent==='function') syncAccent(); renderWordTable(body); });
   $('#wlauto').onclick=()=>{ wl.auto=!wl.auto; if(wl.auto){ const ids=wlFiltered(); const first=wl.cur!=null&&ids.includes(wl.cur)?wl.cur:ids[0]; playAt(first); } else { stopAudio(); wl.cur=null; paintRows(); } };
 }
@@ -1178,14 +1320,17 @@ function paintRows(){
   const count=$('#wlc'); if(count) count.textContent=ids.length;
   if(!ids.length){ box.innerHTML='<div class="emptybox">没有匹配的单词</div>'; return; }
   box.innerHTML=shown.map(i=>{
-    const w=WORDS[i], p=S.prog[i]||{};
+    const w=wordByRef(i), p=S.prog[i]||{};
+    if(!w) return '';
     const ipa=S.set.accent==='us'?(w.ipa_us||''):(w.ipa_gb||w.ipa_us||'');
+    const label=typeof i==='number'?i+1:(ids.indexOf(i)+1);
     return `<div class="wlrow ${wl.cur===i?'playing':''}" data-i="${i}" title="点击播放">
-      <span class="wlidx">${i+1}</span>
+      <span class="wlidx">${label}</span>
       <div>
         <div class="wlhead"><span class="wlw">${esc(w.word)}</span>${(w.exam&&w.exam.length)?`<span class="wlexam">${w.exam.slice(0,3).map(e=>`<span>${esc(e)}</span>`).join('')}</span>`:''}</div>
         <div class="wlipa">${esc(ipa)}${p.wrong?` · <span style="color:var(--wrong)">错 ${p.wrong} 次</span>`:''}</div>
         <div class="wlsenses">${(w.senses||[{pos:w.pos,items:[w.meaning]}]).map(sn=>`<div><b>${esc(sn.pos||w.pos)}</b>${esc((sn.items&&sn.items.length?sn.items:[sn.text]).join(' · '))}</div>`).join('')}</div>
+        ${w.ctx?`<div class="wlctx">${esc(w.ctx)}</div>`:''}
       </div>
       <span style="display:flex;gap:2px;align-items:center">
         <button class="icobtn" type="button" data-star="${i}" aria-label="${p.star?'取消收藏':'收藏'}" title="收藏" style="color:${p.star?'var(--orange)':'var(--tx3)'}">${p.star?ICON.starOn:ICON.star}</button>
@@ -1194,18 +1339,18 @@ function paintRows(){
     </div>`;}).join('')+(ids.length>shown.length?`<button class="btn wlmore" type="button" id="wlmore">还有 ${ids.length-shown.length} 个，继续加载</button>`:'');
   const more=$('#wlmore'); if(more) more.onclick=()=>{ wl.limit=(wl.limit||80)+80; paintRows(); };
   box.querySelectorAll('.wlrow').forEach(row=>{
-    row.onclick=e=>{ if(e.target.closest('button')) return; const i=+row.dataset.i; if(wl.cur===i) { stopAudio(); wl.cur=null; paintRows(); } else playAt(i); };
+    row.onclick=e=>{ if(e.target.closest('a')||e.target.closest('button')) return; const i=refOf(row.dataset.i); if(wl.cur===i) { stopAudio(); wl.cur=null; paintRows(); } else playAt(i); };
   });
   box.querySelectorAll('[data-star]').forEach(b=>b.onclick=()=>{
-    const i=+b.dataset.star,p=P(i); p.star=!p.star;
+    const i=refOf(b.dataset.star),p=P(i); p.star=!p.star;
     if(p.star&&S.set.autoReviewCollect&&!p.due) p.due=Date.now();
     save(); paintRows();
   });
 }
 /* 播放某一行；连播时自动继续 */
 function playAt(i){
-  if(i==null) return;
-  const w=WORDS[i];
+  if(i==null || !wordByRef(i)) return;
+  const w=wordByRef(i);
   const pos=wlFiltered().indexOf(i);
   if(pos>=0 && pos>=(wl.limit||80)) wl.limit=pos+1;
   wl.cur=i; paintRows();
@@ -1228,11 +1373,13 @@ function renderWrong(body){
         <button class="btn primary" id="drillWrong" ${list.length?'':'disabled'}>开始纠错</button>
       </div>
     </div>
-    ${list.length? list.map(i=>{const w=WORDS[i],p=S.prog[i],ws=S.wrongSpell[i]||'';
+    ${list.length? list.map(i=>{const w=wordByRef(i),p=S.prog[i],ws=S.wrongSpell[i]||'';
+      if(!w) return '';
       return `<div class="wcard">
         <div class="w q">${esc(w.word)}</div>
         <div class="i">${esc(w.ipa_us||'')} ${esc(w.ipa_gb||'')}</div>
         <div class="m">${esc(w.pos)} ${esc(w.meaning)}</div>
+        ${w.ctx?`<div class="wlctx">${esc(w.ctx)}</div>`:''}
         <div class="syn">${ws?`你的拼写：<span style="color:var(--wrong)">${esc(ws)}</span> · `:''}错误 ${p.wrong} 次 · 熟练度 ${p.lv}/9</div>
         <div class="tools">
           <button data-act="play" data-i="${i}" title="播放">${ICON.spk.replace('width="30" height="30"','width="17" height="17"')}</button>
@@ -1242,8 +1389,8 @@ function renderWrong(body){
     : `<div class="emptybox">还没有错词<br><span class="sub">去章节里听写几轮，拼错的词会自动出现在这里。</span></div>`}`;
   if($('#drillWrong')) $('#drillWrong').onclick=()=>startList(list,'纠错模式');
   body.querySelectorAll('.tools button').forEach(b=>b.onclick=()=>{
-    const i=+b.dataset.i, p=P(i), act=b.dataset.act;
-    if(act==='play') playWord(WORDS[i]);
+    const i=refOf(b.dataset.i), p=P(i), act=b.dataset.act;
+    if(act==='play') playWord(wordByRef(i));
     if(act==='star'){ p.star=!p.star; if(p.star&&S.set.autoReviewCollect&&!p.due) p.due=Date.now(); save(); renderWrong(body); }
     if(act==='del'){ p.wrong=0; delete S.wrongSpell[i]; save(); renderWrong(body); }
   });
@@ -1289,6 +1436,12 @@ function armQuestion(fn, ms){
   qTimer=setTimeout(()=>{ qTimer=null; fn(); }, ms);
 }
 function startUnit(u,mode){ S.set.chapter=u; save(); startList(units()[u].slice(),'list_'+u,mode); }
+function startBuiltinBook(id,mode){
+  const book=builtinBooks().find(b=>b.id===id);
+  if(!book||!book.words.length){ showToast('这本词书还没有词', false); return; }
+  wl.book=id;
+  startList(book.words.map((_,i)=>bookRef(book.id,i)), book.title, mode);
+}
 const DRILL_TIPS={
   dictation:'听发音，在横线上拼写，然后点提交',
   smart:'这一轮会混合听写、听选和看词选义',
@@ -1318,7 +1471,7 @@ function showToast(t, ok){
   el.querySelector('button').onclick=()=>el.remove();
   setTimeout(()=>{el.remove();},6000);
 }
-function curWord(){ return WORDS[D.ids[D.idx]]; }
+function curWord(){ return wordByRef(D.ids[D.idx]); }
 function questionMode(){
   if(D.mode==='smart'){ const r=Math.random(); return r<0.5?'dictation':(r<0.75?'soundmean':'wordmean'); }
   return D.mode;
@@ -1361,17 +1514,23 @@ function playQuestionAudio(m){
 /* 上一题结果（红=错 / 深色=对） */
 function renderLast(){
   const L=D.last; if(!L) return;
-  const w=L.w, p=WORDS[L.i];
+  const w=L.w, p=wordByRef(L.i)||w;
   const box=$('#ansBox');
   box.innerHTML=`
     <div id="ansWord" class="${L.ok?'right':'wrong'}">${esc(p.word)}</div>
     ${(S.set.mnemonic&&L.ok===false)?`<div style="font-size:14px;color:var(--tx2);letter-spacing:1px">${esc(syllables(p.word))}</div>`:''}
     <div id="ansIpa">${esc(S.set.accent==='us'?(p.ipa_us||''):(p.ipa_gb||''))}</div>
     <div id="ansMean">${esc(p.pos)} ${esc(p.meaning)}</div>
+    ${p.ctx?`<div class="wlctx">${esc(p.ctx)}</div>`:''}
     ${(S.set.showExample&&p.ex)?`<div id="ansEx">${hlWord(p.ex,p.word)}</div>`:''}`;
 }
+function meaningChoices(w){
+  const sample=D&&(D.ids||[]).find(i=>parseBookRef(i));
+  const pool=sample?parseBookRef(sample).book.words.map(x=>x.meaning):WORDS.filter(x=>x&&!x.hidden).map(x=>x.meaning);
+  return pick(pool.filter(m=>m&&m!==w.meaning),3,w.meaning);
+}
 function renderOptions(w){
-  const others=pick(WORDS.map(x=>x.meaning).filter(m=>m!==w.meaning),3,w.meaning);
+  const others=meaningChoices(w);
   const list=shuffle([w.meaning,...others]);
   D.opts=list;
   $('#opts').innerHTML=list.map((m,i)=>`<button class="opt" data-m="${esc(m)}"><span class="num">${i+1}</span><span>${esc(m)}</span></button>`).join('');
@@ -1402,7 +1561,7 @@ function judge(ok,input,chosen){
   if(!D) return;
   const t=$('#toast'); if(t) t.remove();
   D.locked=true;
-  const i=D.ids[D.idx], w=WORDS[i], p=P(i), now=Date.now();
+  const i=D.ids[D.idx], w=wordByRef(i), p=P(i), now=Date.now();
   const target=w.word;
   if(ok){
     p.ok++; p.last=now; p.lv=Math.min(9,(p.lv||0)+1); p.due=now+EBB[Math.min(p.lv-1,EBB.length-1)];
@@ -1458,8 +1617,14 @@ function fixSubmit(){
   }
 }
 /* 错词循环 */
+function keptRefs(keys){
+  return (keys||[]).map(k=>/^\d+$/.test(String(k))?+k:k);
+}
 function maybeRecycle(){
-  const wrongIds=Object.keys(D.wrongSet).map(Number).filter(i=>(D.wrongSet[i]||0)<2);
+  const wrongIds=keptRefs(Object.keys(D.wrongSet)).filter(i=>{
+    const v=D.wrongSet[i];
+    return v===true || (typeof v==='number' && v<2);
+  });
   if(S.set.wrongCycle && wrongIds.length && D.round<4){
     D.round++;
     D.ids=D.ids.concat(wrongIds.map(i=>(D.wrongSet[i]=(D.wrongSet[i]||0)+1, i)));
@@ -1471,7 +1636,7 @@ function maybeRecycle(){
 }
 /* 随身听 */
 function walkmanTick(){
-  const w=WORDS[D.ids[D.idx%D.ids.length]];
+  const w=wordByRef(D.ids[D.idx%D.ids.length]);
   playWord(w,1,()=>{ walkTimer=setTimeout(()=>{ D.idx++; if(D.idx>=D.ids.length) D.idx=0; nextQuestion(); }, S.set.interval*1000); });
 }
 /* 结束 → 结果页 */
@@ -1481,7 +1646,7 @@ function finish(){
   const mins=Math.max(1,Math.round((Date.now()-st.start)/60000));
   const mode=D.mode, chapter=D.chapter;
   S.hist.unshift({t:Date.now(),name:D.name,total,acc,ok:st.ok,bad:st.bad}); S.hist=S.hist.slice(0,50);
-  const wrongIds=Object.keys(D.wrongSet).map(Number);
+  const wrongIds=keptRefs(Object.keys(D.wrongSet));
   const name=D.name;
   save(); localStorage.removeItem(SS); sfx.done();
   $('#resultBody').innerHTML=`
@@ -1501,7 +1666,7 @@ function finish(){
       <button class="btn" id="homeBtn">返回首页</button>
     </div>
     ${wrongIds.length?`<div style="margin-top:14px"><div style="font-size:14px;font-weight:600;margin-bottom:6px">本轮错词</div>
-      ${wrongIds.map(i=>{const w=WORDS[i];return `<div class="result-item">
+      ${wrongIds.map(i=>{const w=wordByRef(i); if(!w) return ''; return `<div class="result-item">
         <span style="flex:1"><b>${esc(w.word)}</b> <span style="color:var(--tx2)">${esc(w.pos)} ${esc(w.meaning)}</span></span>
         ${S.wrongSpell[i]?`<span class="yours">${esc(S.wrongSpell[i])}</span>`:''}
         <button class="icobtn" data-play="${i}">${ICON.spk.replace('width="30" height="30"','width="17" height="17"')}</button></div>`;}).join('')}</div>`:''}
@@ -1515,7 +1680,7 @@ function finish(){
   };
   if($('#seeWrong')) $('#seeWrong').onclick=()=>{ showScreen('Home'); renderHome('wrong'); };
   $('#homeBtn').onclick=()=>showScreen('Home');
-  $$('#resultBody [data-play]').forEach(b=>b.onclick=()=>playWord(WORDS[+b.dataset.play]));
+  $$('#resultBody [data-play]').forEach(b=>b.onclick=()=>playWord(wordByRef(b.dataset.play)));
   D=null;
 }
 
@@ -1578,17 +1743,18 @@ function openWordList(unit){
   const practice=unit==null && D && !String(D.name||'').startsWith('list_');
   if(!practice) unit = unit || (D&&String(D.name||'').startsWith('list_')&&D.chapter) || S.set.chapter || 1;
   listUnit=practice?null:unit;
-  const ids=practice ? (D.sourceIds||D.ids||[]).filter(i=>WORDS[i]&&!WORDS[i].hidden) : (units()[unit]||[]);
+  let ids=practice ? (D.sourceIds||D.ids||[]).filter(i=>{const w=wordByRef(i);return w&&!w.hidden;}) : (units()[unit]||[]);
   const title=practice ? formatName(D.name) : ('第 '+unit+' 页');
   const el=mask(`<div class="sh"><h3>${esc(title)}</h3><button class="icobtn" type="button" data-x aria-label="关闭">✕</button></div>
     <div class="body" id="wlBody"></div>
     ${practice?'':`<div class="ft"><button class="btn" type="button" data-prev>上一页</button><span class="sub" id="wlPos">第 ${unit} 页 · ${ids.length} 词</span><button class="btn" type="button" data-next>下一页</button></div>`}`);
   const body=el.querySelector('#wlBody');
-  body.innerHTML=ids.map(i=>{const w=WORDS[i],p=S.prog[i]||{};return `
+  body.innerHTML=ids.map(i=>{const w=wordByRef(i),p=S.prog[i]||{}; if(!w) return ''; return `
     <div class="wcard" data-i="${i}" style="${D&&D.cur&&D.cur.i===i?'border-color:var(--orange)':''}">
       <div class="w q">${esc(w.word)}</div>
       <div class="i">${esc(w.ipa_us||'')} ${esc(w.ipa_gb?('· '+w.ipa_gb):'')}</div>
       <div class="m">${(w.senses||[{pos:w.pos,text:w.meaning}]).map(sn=>`<div><b style="font-weight:600">${esc(sn.pos||w.pos)}</b> ${esc(sn.text||'')}</div>`).join('')}</div>
+      ${w.ctx?`<div class="wlctx">${esc(w.ctx)}</div>`:''}
       ${(w.exam&&w.exam.length)?`<div class="wlexam" style="margin-top:5px">${w.exam.map(e=>`<span>${esc(e)}</span>`).join('')}</div>`:''}
       <div class="syn">已练 ${p.ok||0} 次 · 熟练度 ${p.lv||0}/9${p.wrong?` · <span style="color:var(--wrong)">错过 ${p.wrong} 次</span>`:''}</div>
       <div class="tabsm"><button class="on" data-t="ex">例句</button><button data-t="en">英义</button><button data-t="syn">近义</button><button data-t="note">笔记</button></div>
@@ -1604,7 +1770,8 @@ function openWordList(unit){
   if(prev) prev.onclick=()=>{ const us=pageKeys(); const n=us[us.indexOf(+listUnit)-1]; if(n){ el.remove(); openWordList(n);} };
   if(next) next.onclick=()=>{ const us=pageKeys(); const n=us[us.indexOf(+listUnit)+1]; if(n){ el.remove(); openWordList(n);} };
   body.querySelectorAll('.wcard').forEach(card=>{
-    const i=+card.dataset.i, w=WORDS[i];
+    const i=refOf(card.dataset.i), w=wordByRef(i);
+    if(!w) return;
     card.style.cursor='pointer';
     card.onclick=e=>{ if(e.target.closest('button')||e.target.closest('.tabsm')) return; playWord(w); };
     card.querySelectorAll('.tabsm button').forEach(b=>b.onclick=()=>{
@@ -1741,6 +1908,7 @@ function openHelp(){
       3. 左上角刚答过的词：<span style="color:var(--wrong)">红色是拼错</span>，深色是拼对<br>
       4. 顶部可以返回、换方式、看本页单词。喇叭重听，可切换英音/美音<br><br>
       <b>生词本</b><br>拍照导入或手动添加。核对后再保存。识别没开通时，改用手动添加。点「练习本单」只练这些词。<br><br>
+      <b>内置词书</b><br>首页「微积分读题词汇」点「打开词表」，再点一行即可在本页听发音。地址栏加上 #calc 会直接打开这本。<br><br>
       <b>复习和错词</b><br>答对后按 5 分钟 → 30 分钟 → 12 小时 → 1 天 → 2 天 → 4 天 → 7 天 → 15 天 → 30 天复习。答错会进入错误本，连续答对两次后移出。<br><br>
       <span class="sub">笔记本共 17 页。内置词用真人录音，自己加的词用手机系统朗读。进度只存在这台设备。</span>
     </div></div>`);
@@ -1781,6 +1949,12 @@ function wire(){
     }
   });
   $$('.tabs button').forEach(b=>b.onclick=()=>renderHome(b.dataset.tab));
+  window.addEventListener('hashchange',()=>{
+    const id=bookFromLocation();
+    if(!id) return;
+    wl.book=id; wl.limit=200; wl.unit=0;
+    renderHome('list');
+  });
   document.addEventListener('keydown',onKey);
   document.addEventListener('fullscreenchange',()=>{ if(backToSet) backToSet('dis'); });
 }
@@ -1809,12 +1983,12 @@ function onKey(e){
   }
   if(k==='ArrowUp'){ e.preventDefault(); prevWord(); return; }
   if(k==='ArrowDown' && D.mode==='walkman'){ e.preventDefault(); D.idx++; nextQuestion(); return; }
-  if(mod&&k==='ArrowRight'){ e.preventDefault(); const i=D.cur.i,p=P(i); p.lv=9;p.ok++;p.due=Date.now()+EBB[8];save(); showToast('已标熟：'+WORDS[i].word); return; }
+  if(mod&&k==='ArrowRight'){ e.preventDefault(); const i=D.cur.i,p=P(i),w=wordByRef(i); p.lv=9;p.ok++;p.due=Date.now()+EBB[8];save(); showToast('已标熟：'+(w?w.word:'')); return; }
   if(mod&&(k==='l'||k==='L')){ e.preventDefault(); openWordList(); return; }
   if(mod&&(k==='q'||k==='Q')){ e.preventDefault(); const i=D.cur.i,p=P(i); p.star=!p.star; if(p.star&&S.set.autoReviewCollect&&!p.due)p.due=Date.now(); save(); showToast(p.star?'已收藏':'已取消收藏'); return; }
   if(mod&&(k==='y'||k==='Y')){ e.preventDefault(); S.set.showIpa=!S.set.showIpa; save(); renderLast(); showToast(S.set.showIpa?'显示音标':'隐藏音标'); return; }
   if(mod&&(k==='i'||k==='I')){ e.preventDefault(); S.set.showExample=!S.set.showExample; save(); renderLast(); showToast(S.set.showExample?'显示例句':'隐藏例句'); return; }
-  if(e.altKey){ e.preventDefault(); const p=WORDS[D.cur.i]; if(p.ex) playExample(p); else showToast('这个单词暂无例句'); return; }
+  if(e.altKey){ e.preventDefault(); const p=wordByRef(D.cur.i); if(p&&p.ex) playExample(p); else showToast('这个单词暂无例句'); return; }
   if(k==='Shift'&&D.phase==='fix'){ D.phase='ask'; D.idx++; nextQuestion(); return; }
 }
 /* ---------- 启动 ---------- */
@@ -1827,7 +2001,9 @@ async function init(){
   if(speechOK){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
   wire();
   showScreen('Home');
-  if(location.hash==='#list') renderHome('list');
+  const openId=bookFromLocation();
+  if(openId){ wl.book=openId; wl.limit=200; renderHome('list'); }
+  else if(location.hash==='#list') renderHome('list');
   if(!sessionStorage.getItem('autoTip')){ sessionStorage.setItem('autoTip','1'); }
   // 缺音频提醒
   setTimeout(()=>{ const probe=new Audio(audioSrc(WORDS[0],'us')); probe.onerror=()=>{ audioOK=false; }; },300);

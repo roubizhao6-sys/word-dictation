@@ -110,34 +110,29 @@ REPLACEMENTS = [
     ("const LS='dictation_idict_v1';", "const LS='dictation_blank_v1';"),
     ("const IDB_NAME='word_dictation_db';", "const IDB_NAME='word_dictation_blank_db';"),
     (CHAP_OLD, CHAP_NEW),
+    ('<script src="books/calculus.js"></script>\n', ''),
     (
-        """: `<div style="text-align:center;color:var(--tx2);padding:50px 0">还没有生词<br><span class="sub">在「单词表」里点 ☆ 收藏，或点上面「＋ 添加单词」</span></div>`;""",
-        """: `<div style="text-align:center;color:var(--tx2);padding:50px 0">暂无单词，请添加<br><span class="sub">点上面「＋ 添加单词」或「📷 拍照导入」</span></div>`;""",
+        """: `<div class="emptybox">还没有生词<br><span class="sub">拍一张单词本，或手动输入。单词表里的星标也会出现在这里。</span>
+        <div class="actions"><button class="btn primary" type="button" id="emptyOcr">拍照导入</button><button class="btn" type="button" id="emptyAdd">手动添加</button></div></div>`;""",
+        """: `<div class="emptybox">暂无单词，请添加<br><span class="sub">点上面「拍照导入」或「手动添加」。</span>
+        <div class="actions"><button class="btn primary" type="button" id="emptyOcr">拍照导入</button><button class="btn" type="button" id="emptyAdd">手动添加</button></div></div>`;""",
     ),
     (
-        "function paintRows(){\n  const ids=wlFiltered(), box=$('#wlrows'); if(!box) return;\n  $('#wlc').textContent=ids.length;\n  box.innerHTML=ids.map(i=>{",
-        """function paintRows(){
-  const ids=wlFiltered(), box=$('#wlrows'); if(!box) return;
-  $('#wlc').textContent=ids.length;
-  if(!ids.length){
+        "  if(!ids.length){ box.innerHTML='<div class=\"emptybox\">没有匹配的单词</div>'; return; }",
+        """  if(!ids.length){
     const any=WORDS.some(w=>!w.hidden);
-    box.innerHTML=`<div style="text-align:center;color:var(--tx2);padding:50px 0">${any?'没有匹配的单词':'暂无单词，请添加'}<br><span class="sub">${any?'换个关键词，或清空搜索':'到「生词本」点「＋ 添加单词」或「拍照导入」'}</span></div>`;
+    box.innerHTML=any?'<div class="emptybox">没有匹配的单词</div>':'<div class="emptybox">暂无单词，请添加<br><span class="sub">到「生词本」点「手动添加」或「拍照导入」</span></div>';
     return;
-  }
-  box.innerHTML=ids.map(i=>{""",
+  }""",
     ),
     (
         "  $('#wlauto').onclick=()=>{ wl.auto=!wl.auto; if(wl.auto){ const ids=wlFiltered(); const first=wl.cur!=null&&ids.includes(wl.cur)?wl.cur:ids[0]; playAt(first); } else { stopAudio(); wl.cur=null; paintRows(); } };",
         "  $('#wlauto').onclick=()=>{ wl.auto=!wl.auto; if(wl.auto){ const ids=wlFiltered(); if(!ids.length){ wl.auto=false; showToast('暂无单词，请添加'); paintRows(); return; } const first=wl.cur!=null&&ids.includes(wl.cur)?wl.cur:ids[0]; playAt(first); } else { stopAudio(); wl.cur=null; paintRows(); } };",
     ),
     (
-        "function playAt(i){\n  if(i==null) return;",
-        "function playAt(i){\n  if(i==null || !WORDS[i]) return;",
-    ),
-    (
-        """      }).join('')}</tbody></table>
+        """      }).join('')}</tbody></table></div>
     <div style="margin-top:20px;font-size:14px;font-weight:600">最近练习</div>""",
-        """      }).join('')}</tbody></table>
+        """      }).join('')}</tbody></table></div>
     ${Object.keys(u).length?'':`<div style="color:var(--tx2);padding:8px 0 4px">${WORDS.some(w=>!w.hidden)?'没有内置章节。已添加的单词在「生词本」和「单词表」。':'暂无单词，请添加'}</div>`}
     <div style="margin-top:20px;font-size:14px;font-weight:600">最近练习</div>""",
     ),
@@ -146,19 +141,17 @@ REPLACEMENTS = [
         "function startUnit(u,mode){ const list=(units()[u]||[]).slice(); if(!list.length){ alert('暂无单词，请添加'); return; } S.set.chapter=u; save(); startList(list,'list_'+u,mode); }",
     ),
     (
-        "  const ids=units()[unit]||[];",
-        "  let ids=units()[unit]||[];\n  if(!ids.length) ids=(D&&D.ids&&D.ids.length)?D.ids.slice():mineIds();",
+        "  let ids=practice ? (D.sourceIds||D.ids||[]).filter(i=>{const w=wordByRef(i);return w&&!w.hidden;}) : (units()[unit]||[]);",
+        "  let ids=practice ? (D.sourceIds||D.ids||[]).filter(i=>{const w=wordByRef(i);return w&&!w.hidden;}) : (units()[unit]||[]);\n  if(!practice && !ids.length) ids=(D&&D.ids&&D.ids.length)?D.ids.slice():mineIds();",
     ),
     (
-        """    </div>`}).join('');
-  el.querySelector('[data-x]').onclick=()=>el.remove();""",
-        """    </div>`}).join('');
-  if(!ids.length) body.innerHTML='<div style="text-align:center;color:var(--tx2);padding:40px 0">暂无单词，请添加</div>';
-  el.querySelector('[data-x]').onclick=()=>el.remove();""",
+        """    </div>`}).join('') || '<div class="emptybox">这一份里还没有单词</div>';""",
+        """    </div>`}).join('') || '<div class="emptybox">暂无单词，请添加</div>';
+  if(!ids.length) body.innerHTML='<div class="emptybox">暂无单词，请添加</div>';""",
     ),
     (
-        """<span style="color:var(--tx2)">词库来自你的手写笔记本（17 页 689 词），音标/英文释义/例句已自动补全，发音为真人录音（美音+英音各一份）。</span>""",
-        """<span style="color:var(--tx2)">这一版没有内置单词。请在「生词本」里手动添加，或拍照识别后保存。没有配套录音时，发音使用系统英语语音。</span>""",
+        """      <b>内置词书</b><br>首页「微积分读题词汇」点「打开词表」，再点一行即可在本页听发音。地址栏加上 #calc 会直接打开这本。<br><br>\n""",
+        """      <b>词书</b><br>这一版没有内置单词。请在「生词本」里手动添加，或拍照识别后保存。<br><br>\n""",
     ),
     (
         """  const url='https://roubizhao6-sys.github.io/word-dictation/';
@@ -166,8 +159,6 @@ REPLACEMENTS = [
         f"""  const url='{BLANK_URL}';
   const data={{title:'单词听写 · 空白词库',text:'空白词库 · 听写/听选/看词选义 · 拍照导入 · 请自行添加单词',url}};""",
     ),
-    ("sessionStorage.getItem('tipShown')", "sessionStorage.getItem('blankTipShown')"),
-    ("sessionStorage.setItem('tipShown','1')", "sessionStorage.setItem('blankTipShown','1')"),
     ("sessionStorage.getItem('autoTip')", "sessionStorage.getItem('blankAutoTip')"),
     ("sessionStorage.setItem('autoTip','1')", "sessionStorage.setItem('blankAutoTip','1')"),
     (
