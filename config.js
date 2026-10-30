@@ -6,4 +6,4 @@
 //
 // The Worker allows https://roubizhao6-sys.github.io by default
 // (OCR_ALLOWED_ORIGINS in wrangler.jsonc). Origins do not include a path.
-window.OCR_API_URL = "https://word-dictation-ocr.YOUR_SUBDOMAIN.workers.dev";
+window.OCR_API_URL = "https://word-dictation-ocr.roubizhao6.workers.dev";
