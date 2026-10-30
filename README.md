@@ -18,6 +18,26 @@
 
 也可直接打开 `index.html` 离线使用。
 
+## 空白词库
+
+同一仓库、同一 GitHub Pages 站点下还有一份**没有内置单词**的页面，听写模式、生词本、拍照导入和发音都在，打开后词表是空的：
+
+**https://roubizhao6-sys.github.io/word-dictation/empty/**
+
+主站根目录的 `index.html`、`words.json`、`words.csv` 仍是全部 689 词，不要改成空数组。空白页的词库是 `empty/index.html` 里的 `const WORDS = [];`，另外 `empty/words.json` 为 `[]`、`empty/words.csv` 只留表头（页面不读取这两个文件，真正生效的是 `WORDS`）。
+
+两套页面都从 `main` 分支根目录发布。合并到 `main` 后 GitHub Pages 会自动更新，没有单独的部署命令。
+
+空白页用自己的本机存储（`dictation_blank_v1`、`word_dictation_blank_db`），不会读到主站的进度和生词。OCR 地址仍只写在仓库根目录的 `config.js`，空白页用 `../config.js` 引用它。Worker 允许的来源是 `https://roubizhao6-sys.github.io`（不含路径），两条链接共用，不必改 Worker。
+
+主站 `index.html` 的界面有改动时，在仓库根目录重新生成空白页再提交：
+
+```bash
+python3 scripts/build-empty-site.py
+```
+
+不要把 689 词复制进 `empty/`。
+
 
 ## OCR 词本导入
 
@@ -97,3 +117,5 @@ Google Cloud 侧需要：
 ```bash
 npm test
 ```
+
+其中会检查主站仍是 689 词，且 `empty/` 与 `scripts/build-empty-site.py` 一致。
