@@ -260,6 +260,9 @@ html[data-theme="dark"] #toast{background:#16281f;color:#7fd7a6;border-color:#24
 .ocrReviewRow input[type=checkbox]{width:17px;height:17px;accent-color:var(--orange)}
 .ocrReviewRow input[type=text]{min-width:0;width:100%;font-size:13.5px;padding:8px 9px}
 .ocrReviewRow input.bad{border-color:var(--wrong)}
+.ocrTips{text-align:left;max-width:440px;margin:8px auto 0;line-height:1.65}
+.ocrTips ul{margin:6px 0 8px;padding-left:1.2em}
+.ocrReviewTools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .ocrErrorBox{background:rgba(236,106,94,.08);border:1px solid var(--wrong);border-radius:10px;padding:10px 12px;margin-top:10px}
 .ocrErrorBox .ocrHint{margin:0}
 .ocrErrorBox .btn{margin-top:8px}
@@ -856,9 +859,15 @@ function validEnglish(word){
 function ocrUserMessage(status, raw, name){
   const msg=String(raw||'');
   if(status===503 || /尚未配置|GOOGLE_VISION|API key/i.test(msg)) return 'OCR 服务尚未配置。可以先手动添加单词，开通后再拍照导入。';
+  if(/尚未开通高精度/.test(msg)) return '高精度文字识别还没开通。请到百度智能云「文字识别 → 应用列表 → 创建应用」，勾选「通用文字识别（高精度含位置版）」。也可以先手动添加。';
+  if(/尚未开通手写/.test(msg)) return '手写识别还没开通。当前默认不用手写接口。若仍看到这句，请确认没有打开手写开关。也可以先手动添加。';
+  if(/调用次数已达上限/.test(msg)) return '识别次数用完了。可以明天再试，或先手动添加单词。';
+  if(/过于频繁|识别过于频繁/.test(msg)) return '识别太频繁，请稍等一分钟再试。';
+  if(/无法获取访问凭证|访问凭证无效/.test(msg)) return '百度账号还没配对成功。可以先手动添加单词。';
   if(status===403) return '请从正式站点打开后再试拍照识别。当前页面不能调用识别服务。';
   if(status===429) return '识别太频繁，请稍等一分钟再试。';
-  if(status===413) return '图片太大，请缩小选区后再试。';
+  if(status===413 || /图片过大|请求内容过大/.test(msg)) return '图片太大，请缩小选区后再试。';
+  if(/图片格式/.test(msg)) return '这张图的格式不受支持。请换 JPEG 或 PNG，手机 HEIC 请先改存成 JPG。';
   if(status===404) return '识别服务地址不对。可以先手动添加单词。';
   if(name==='AbortError') return '识别超时，请重试，或改为手动添加。';
   if(name==='TypeError' || /Failed to fetch|NetworkError|Load failed/i.test(msg)) return '网络不通，识别失败。请检查网络后重试，或改为手动添加。';
@@ -888,7 +897,7 @@ function openOcrImport(){
         <input type="file" id="ocrFile" accept="image/*" class="hide">
         <input type="file" id="ocrCameraFile" accept="image/*" capture="environment" class="hide">
       </div>
-      <div id="ocrIntro" class="ocrHint">拍下或选一张单词本。框选文字后再识别，确认无误才会保存到这台设备。识别未开通或失败时，可以改为手动添加。</div>
+      <div id="ocrIntro" class="ocrHint">拍下或选一张单词本。框紧文字后再识别，确认无误才会保存到这台设备。光线亮、少留空白时更准；印刷体通常比手写清楚。识别未开通或失败时，可以改为手动添加。</div>
       <div id="ocrWorkspace" class="hide">
         <div class="ocrStageWrap"><div class="ocrStage" id="ocrStage">
           <img id="ocrImage" alt="待识别图片">
@@ -897,7 +906,7 @@ function openOcrImport(){
             <span class="ocrHandle" data-dir="sw"></span><span class="ocrHandle" data-dir="se"></span>
           </div>
         </div></div>
-        <div class="ocrHint">拖动白框选择要识别的区域，四角可以改大小。默认识别整页。</div>
+        <div class="ocrHint">拖动白框贴着单词，四角可以改大小。少框空白。默认识别整页，字小或歪的时候请再裁紧一点。</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
           <button class="btn primary" type="button" id="ocrRun">识别选中区域</button>
           <button class="btn" type="button" id="ocrReset">重置选区</button>
@@ -906,7 +915,7 @@ function openOcrImport(){
       <div id="ocrProgress" class="ocrProgress hide" role="status"><i></i><span>正在识别，请稍候…</span></div>
       <div id="ocrError" class="ocrErrorBox hide" role="alert"><div class="ocrHint" id="ocrErrorText" style="color:var(--wrong)"></div><button class="btn sm" type="button" id="ocrManual">改为手动添加</button></div>
       <div id="ocrReview" class="hide" style="margin-top:14px">
-        <div class="rowset" style="border:none;padding:0 0 8px"><div><div class="lb">确认识别结果</div><div class="sub">改对单词和中文，取消勾选可跳过。确认后再保存。</div></div><button class="btn sm" type="button" id="ocrAddRow">加一行</button></div>
+        <div class="rowset" style="border:none;padding:0 0 8px"><div><div class="lb">确认识别结果</div><div class="sub" id="ocrReviewCount">勾选要保存的词，可改英文和中文。</div></div><div class="ocrReviewTools"><button class="btn sm" type="button" id="ocrAll">全选</button><button class="btn sm" type="button" id="ocrNone">全不选</button><button class="btn sm" type="button" id="ocrAddRow">加一行</button></div></div>
         <div class="ocrReviewHead"><span></span><span>英文单词</span><span>中文释义（可选）</span><span></span></div>
         <div id="ocrRows"></div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
@@ -952,12 +961,30 @@ function openOcrImport(){
     crop={x:w*.05,y:h*.05,w:w*.9,h:h*.9};
     applyCrop();
   }
-  function loadImage(file){
+  async function uprightObjectUrl(file){
+    if(typeof createImageBitmap!=='function') return '';
+    let bitmap=null;
+    try{ bitmap=await createImageBitmap(file,{imageOrientation:'from-image'}); }
+    catch(e){ return ''; }
+    try{
+      const canvas=document.createElement('canvas');
+      canvas.width=bitmap.width; canvas.height=bitmap.height;
+      const ctx=canvas.getContext('2d',{alpha:false});
+      if(!ctx) return '';
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+      ctx.drawImage(bitmap,0,0);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.92));
+      return blob?URL.createObjectURL(blob):'';
+    }finally{ if(bitmap&&bitmap.close) bitmap.close(); }
+  }
+  async function loadImage(file){
     if(!file) return;
     if(file.type && !/^image\//.test(file.type)){ setError('请选择图片。手机若是 HEIC，请改存为 JPG 或 PNG。'); return; }
     setError(''); review.classList.add('hide'); lastItems=[];
     if(objectUrl) URL.revokeObjectURL(objectUrl);
-    objectUrl=URL.createObjectURL(file);
+    objectUrl=await uprightObjectUrl(file);
+    if(!objectUrl) objectUrl=URL.createObjectURL(file);
     img.onload=()=>{
       workspace.classList.remove('hide');
       intro.classList.add('hide');
@@ -1004,13 +1031,23 @@ function openOcrImport(){
   box.addEventListener('pointerup',endDrag);
   box.addEventListener('pointercancel',endDrag);
 
+  function refreshReviewCount(){
+    const all=[...rows.querySelectorAll('.ocrReviewRow')];
+    const picked=all.filter(row=>row.querySelector('input[type=checkbox]').checked).length;
+    const label=el.querySelector('#ocrReviewCount');
+    if(!label) return;
+    label.textContent=all.length
+      ? `已勾选 ${picked} / ${all.length}。改对英文和中文后再保存，取消勾选或删除可跳过。`
+      : '没有词。可以加一行手填，或返回重新拍照。';
+  }
   function renderReview(items){
     lastItems=Array.isArray(items)?items.slice():[];
     rows.innerHTML='';
     if(!lastItems.length){
-      rows.innerHTML='<div class="ocrEmpty">没有认出英文单词。可以返回重新选区，点「加一行」手填，或改为手动添加。</div>';
+      rows.innerHTML='<div class="ocrEmpty">没有认出英文单词。<div class="ocrTips"><div>可以这样再拍一次：</div><ul><li>光线亮一些，纸面不要有大片阴影</li><li>裁剪框贴着单词，少留空白</li><li>印刷体比手写更容易认出；手写请写清楚、字距拉开</li></ul><div>也可以点「加一行」手填，或改为手动添加。</div></div></div>';
     }
     lastItems.forEach(item=>addReviewRow(item));
+    refreshReviewCount();
     review.classList.remove('hide');
     workspace.classList.add('hide');
   }
@@ -1021,11 +1058,15 @@ function openOcrImport(){
       <input type="text" class="ocrWord" aria-label="英文单词" maxlength="80" placeholder="英文单词" value="${esc(item.word||'')}">
       <input type="text" class="ocrMeaning" aria-label="中文释义" maxlength="240" placeholder="中文释义（可选）" value="${esc(item.meaning||'')}">
       <button class="icobtn" type="button" aria-label="删除此行">${ICON.trash}</button>`;
-    row.querySelector('button').onclick=()=>row.remove();
+    row.querySelector('input[type=checkbox]').onchange=refreshReviewCount;
+    row.querySelector('button').onclick=()=>{ row.remove(); refreshReviewCount(); };
     rows.appendChild(row);
+    refreshReviewCount();
     return row;
   }
   el.querySelector('#ocrAddRow').onclick=()=>addReviewRow();
+  el.querySelector('#ocrAll').onclick=()=>{ rows.querySelectorAll('input[type=checkbox]').forEach(box=>{ box.checked=true; }); refreshReviewCount(); };
+  el.querySelector('#ocrNone').onclick=()=>{ rows.querySelectorAll('input[type=checkbox]').forEach(box=>{ box.checked=false; }); refreshReviewCount(); };
   el.querySelector('#ocrBack').onclick=()=>{ review.classList.add('hide'); workspace.classList.remove('hide'); };
 
   function makeCropDataUrl(){
@@ -1041,6 +1082,7 @@ function openOcrImport(){
     const canvas=document.createElement('canvas'); canvas.width=outW; canvas.height=outH;
     const ctx=canvas.getContext('2d',{alpha:false});
     ctx.fillStyle='#fff'; ctx.fillRect(0,0,outW,outH);
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
     try{ ctx.filter='grayscale(1) contrast(1.16)'; }catch(e){}
     ctx.drawImage(img,sx,sy,sourceW,sourceH,0,0,outW,outH);
     let data=canvas.toDataURL('image/jpeg',.88);
@@ -1049,6 +1091,7 @@ function openOcrImport(){
       const r2=Math.min(1,1400/Math.max(outW,outH));
       c2.width=Math.max(1,Math.round(outW*r2)); c2.height=Math.max(1,Math.round(outH*r2));
       const x2=c2.getContext('2d',{alpha:false}); x2.fillStyle='#fff'; x2.fillRect(0,0,c2.width,c2.height);
+      x2.imageSmoothingEnabled=true; x2.imageSmoothingQuality='high';
       try{ x2.filter='grayscale(1) contrast(1.16)'; }catch(e){}
       x2.drawImage(canvas,0,0,c2.width,c2.height);
       data=c2.toDataURL('image/jpeg',.8);

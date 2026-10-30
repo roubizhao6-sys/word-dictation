@@ -14,11 +14,13 @@ const DEFAULT_ALLOWED_ORIGINS = 'https://roubizhao6-sys.github.io';
 const ALLOWED_IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const ALLOWED_LANGUAGES = new Set(['en', 'zh-Hans', 'zh-Hant']);
 const BAIDU_TOKEN_URL = 'https://aip.baidubce.com/oauth/2.0/token';
-// Notebook photos are handwritten Chinese plus English. Baidu's handwriting
-// endpoint is built for that; accurate_basic targets printed text. The
-// handwriting API splits English into letters unless eng_granularity=word,
-// which would break word-pair parsing.
+// Default is 通用文字识别（高精度含位置版）. It has a free monthly quota and
+// returns line locations, which we use to order notebook lines. Handwriting
+// stays available only when BAIDU_OCR_HANDWRITING is enabled, because that
+// API must be checked on the Baidu app or it returns error 6 / 216102.
+// https://cloud.baidu.com/doc/OCR/s/tk3h7y2aq
 // https://cloud.baidu.com/doc/OCR/s/hk3h7y2qq
+const BAIDU_ACCURATE_URL = 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate';
 const BAIDU_HANDWRITING_URL = 'https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting';
 const TOKEN_SKEW_MS = 5 * 60 * 1000;
 
@@ -51,10 +53,32 @@ function normalizeText(value, maxLength = 200) {
     .slice(0, maxLength);
 }
 
+function foldFullwidth(value) {
+  return String(value || '')
+    .replace(/[\uFF01-\uFF5E]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    .replace(/\u3000/g, ' ');
+}
+
 function stripListMarker(line) {
   return normalizeText(line, 500)
-    .replace(/^[•·*\-–—]+\s*/, '')
-    .replace(/^\d{1,3}\s*[.)、:：\-]\s*/, '');
+    .replace(/^[•·*\-–—.|｜]+\s*/, '')
+    .replace(/^[（(]?\d{1,3}[）)]\s*/, '')
+    .replace(/^\d{1,3}\s*[.)、:：\-]\s*/, '')
+    .replace(/^\d{1,3}\s+(?=[A-Za-z])/, '');
+}
+
+function repairOcrToken(token) {
+  if (!/[A-Za-z]/.test(token) || !/[01]/.test(token)) return token;
+  const letters = token.replace(/[^A-Za-z]/g, '');
+  if (letters.length < 2) return token;
+  const swapped = token.replace(/[^01]/g, '').length;
+  if (swapped > letters.length) return token;
+  const upper = letters === letters.toUpperCase();
+  return token.replace(/0/g, upper ? 'O' : 'o').replace(/1/g, upper ? 'L' : 'l');
+}
+
+function repairOcrLine(line) {
+  return line.replace(/[A-Za-z0-9'’\-]+/g, repairOcrToken);
 }
 
 function normalizeEnglish(english, meaning) {
@@ -81,9 +105,9 @@ function normalizeEnglish(english, meaning) {
 }
 
 function extractItems(ocrText) {
-  const lines = String(ocrText || '')
+  const lines = foldFullwidth(ocrText)
     .split(/\r?\n/)
-    .map(stripListMarker)
+    .map(line => repairOcrLine(stripListMarker(line)))
     .filter(Boolean);
 
   const items = [];
@@ -316,31 +340,114 @@ function isBaiduTokenError(payload) {
   return code === 100 || code === 110 || code === 111;
 }
 
-function baiduOcrError(payload, httpStatus) {
+function baiduOcrError(payload, httpStatus, notEnabledMessage) {
   const code = Number(payload && payload.error_code);
   if (code === 216201) return httpError(400, '图片格式不受支持，请使用 JPEG 或 PNG', code);
   if (code === 216202) return httpError(400, '图片过大或分辨率过高，请重新裁剪后再试', code);
   if (code === 216200) return httpError(400, '图片内容为空', code);
   if (code === 17 || code === 19) return httpError(502, 'OCR 调用次数已达上限，请稍后再试', code);
   if (code === 4 || code === 18) return httpError(502, 'OCR 调用过于频繁，请稍后再试', code);
-  if (code === 6 || code === 216102) return httpError(502, 'OCR 服务尚未开通手写识别', code);
+  if (code === 6 || code === 216102) {
+    return httpError(502, notEnabledMessage || 'OCR 服务尚未开通', code);
+  }
   if (code === 100 || code === 110 || code === 111) return httpError(502, 'OCR 上游服务失败，访问凭证无效', code);
   if (code) return httpError(502, `OCR 上游服务失败（${code}）`, code);
   return httpError(502, `OCR 上游服务失败（${httpStatus || 502}）`);
 }
 
-function handwritingText(payload) {
+function handwritingEnabled(env) {
+  const flag = String(env && env.BAIDU_OCR_HANDWRITING || '').trim().toLowerCase();
+  return flag === '1' || flag === 'true' || flag === 'yes' || flag === 'on';
+}
+
+function ocrTarget(languageHints, env) {
+  const languageType = baiduLanguageType(languageHints);
+  if (handwritingEnabled(env)) {
+    return {
+      endpoint: BAIDU_HANDWRITING_URL,
+      fields: {
+        eng_granularity: 'word',
+        detect_direction: 'true',
+        language_type: languageType
+      },
+      notEnabled: 'OCR 服务尚未开通手写识别'
+    };
+  }
+  // recognize_granularity=big keeps each line whole. small would return
+  // characters, and eng_granularity only applies in that mode.
+  return {
+    endpoint: BAIDU_ACCURATE_URL,
+    fields: {
+      recognize_granularity: 'big',
+      detect_direction: 'true',
+      language_type: languageType
+    },
+    notEnabled: 'OCR 服务尚未开通高精度文字识别'
+  };
+}
+
+function medianNumber(values) {
+  const nums = values.filter(value => Number.isFinite(value) && value > 0).sort((a, b) => a - b);
+  if (!nums.length) return 0;
+  const mid = Math.floor(nums.length / 2);
+  return nums.length % 2 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+}
+
+function wordsResultText(payload) {
   const rows = Array.isArray(payload && payload.words_result) ? payload.words_result : [];
   const lines = rows.map(row => ({
     words: String(row && row.words || '').trim(),
     top: Number(row && row.location && row.location.top),
-    left: Number(row && row.location && row.location.left)
+    left: Number(row && row.location && row.location.left),
+    width: Number(row && row.location && row.location.width) || 0,
+    height: Number(row && row.location && row.location.height) || 0
   })).filter(row => row.words);
-  const positioned = lines.every(row => Number.isFinite(row.top) && Number.isFinite(row.left));
-  if (positioned && lines.length > 1) {
-    lines.sort((a, b) => (a.top - b.top) || (a.left - b.left));
+  const positioned = lines.length > 1 && lines.every(row => Number.isFinite(row.top) && Number.isFinite(row.left));
+  if (!positioned) return lines.map(row => row.words).join('\n');
+
+  const rowThreshold = Math.max(8, medianNumber(lines.map(row => row.height)) * 0.65 || 12);
+  const sorted = lines.slice().sort((a, b) => (a.top - b.top) || (a.left - b.left));
+  const bands = [];
+  for (const line of sorted) {
+    const band = bands[bands.length - 1];
+    const anchor = band
+      ? band.items.reduce((sum, item) => sum + item.top, 0) / band.items.length
+      : 0;
+    if (band && Math.abs(line.top - anchor) <= rowThreshold) band.items.push(line);
+    else bands.push({ items: [line] });
   }
-  return lines.map(row => row.words).join('\n');
+  for (const band of bands) band.items.sort((a, b) => a.left - b.left);
+
+  const measured = lines.every(row => row.width > 0);
+  const gapThreshold = Math.max(36, (medianNumber(lines.map(row => row.width)) || 40) * 1.6);
+  const segmented = bands.map(band => {
+    if (!measured || band.items.length < 2) return [band.items];
+    const parts = [];
+    let current = [band.items[0]];
+    for (let index = 1; index < band.items.length; index += 1) {
+      const prev = band.items[index - 1];
+      const gap = band.items[index].left - (prev.left + prev.width);
+      if (gap > gapThreshold) {
+        parts.push(current);
+        current = [band.items[index]];
+      } else current.push(band.items[index]);
+    }
+    parts.push(current);
+    return parts;
+  });
+  const multiRows = segmented.filter(parts => parts.length >= 2).length;
+  const columnCount = Math.max(...segmented.map(parts => parts.length));
+  if (!(measured && columnCount >= 2 && multiRows >= Math.ceil(segmented.length * 0.6))) {
+    return segmented.map(parts => parts.flat().map(item => item.words).join(' ')).join('\n');
+  }
+
+  const columns = Array.from({ length: columnCount }, () => []);
+  for (const parts of segmented) {
+    parts.forEach((part, index) => {
+      columns[index].push(part.map(item => item.words).join(' '));
+    });
+  }
+  return columns.flat().join('\n');
 }
 
 async function credentialTag(apiKey, secretKey) {
@@ -358,28 +465,48 @@ function baiduCredentials(env) {
   };
 }
 
+function sanitizeBaiduTokenDetail(payload, apiKey, secretKey) {
+  const raw = payload && (payload.error_description || payload.error || payload.error_msg);
+  if (raw == null) return '';
+  let text = String(raw).replace(/[\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const secrets = [apiKey, secretKey].filter(value => value && value.length >= 8);
+  for (const secret of secrets) {
+    text = text.split(secret).join('');
+    const encoded = encodeURIComponent(secret);
+    if (encoded !== secret) text = text.split(encoded).join('');
+  }
+  text = text.replace(/\s+/g, ' ').trim().slice(0, 80);
+  return text;
+}
+
 async function requestBaiduAccessToken(apiKey, secretKey, tag) {
-  // Credentials stay in the POST body. Baidu still requires the resulting
-  // access_token on the OCR URL; the API key and secret never go there.
+  // Baidu documents client_id/client_secret on the token URL query string.
+  // Also send them in the POST body. Follow redirects; Workers sometimes see
+  // a hop that redirect:manual would treat as failure. The API key and secret
+  // still never go on the OCR URL — only the resulting access_token does.
+  const url = new URL(BAIDU_TOKEN_URL);
+  url.searchParams.set('grant_type', 'client_credentials');
+  url.searchParams.set('client_id', apiKey);
+  url.searchParams.set('client_secret', secretKey);
   const body = new URLSearchParams({
     grant_type: 'client_credentials',
     client_id: apiKey,
     client_secret: secretKey
   });
-  const response = await fetch(BAIDU_TOKEN_URL, {
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
-    redirect: 'manual',
+    redirect: 'follow',
     cache: 'no-store'
   });
-  if (response.status >= 300 && response.status < 400) {
-    throw httpError(502, 'OCR 上游服务失败，无法获取访问凭证');
-  }
   const payload = await response.json().catch(() => null);
   const accessToken = payload && payload.access_token;
   if (!response.ok || typeof accessToken !== 'string' || !accessToken) {
-    throw httpError(502, 'OCR 上游服务失败，无法获取访问凭证');
+    const detail = sanitizeBaiduTokenDetail(payload, apiKey, secretKey);
+    throw httpError(502, detail
+      ? `OCR 上游服务失败，无法获取访问凭证（${detail}）`
+      : 'OCR 上游服务失败，无法获取访问凭证');
   }
 
   const expiresInMs = Number(payload.expires_in) * 1000;
@@ -412,21 +539,20 @@ function getBaiduAccessToken(env) {
   return run;
 }
 
-async function callHandwriting(base64, languageHints, env, allowRefresh) {
+async function callBaiduOcr(base64, languageHints, env, allowRefresh) {
   const accessToken = await getBaiduAccessToken(env);
-  const url = new URL(BAIDU_HANDWRITING_URL);
+  const target = ocrTarget(languageHints, env);
+  const url = new URL(target.endpoint);
   url.searchParams.set('access_token', accessToken);
   const body = new URLSearchParams({
     image: base64,
-    eng_granularity: 'word',
-    detect_direction: 'true',
-    language_type: baiduLanguageType(languageHints)
+    ...target.fields
   });
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
-    redirect: 'manual',
+    redirect: 'follow',
     cache: 'no-store'
   });
   if (response.status >= 300 && response.status < 400) {
@@ -435,17 +561,17 @@ async function callHandwriting(base64, languageHints, env, allowRefresh) {
   const payload = await response.json().catch(() => null);
   if (allowRefresh && isBaiduTokenError(payload)) {
     invalidateBaiduToken();
-    return callHandwriting(base64, languageHints, env, false);
+    return callBaiduOcr(base64, languageHints, env, false);
   }
   if (!response.ok || !payload || payload.error_code) {
-    throw baiduOcrError(payload, response.status);
+    throw baiduOcrError(payload, response.status, target.notEnabled);
   }
   return payload;
 }
 
 async function runBaiduOcr(base64, languageHints, env) {
-  const payload = await callHandwriting(base64, languageHints, env, true);
-  const rawText = handwritingText(payload);
+  const payload = await callBaiduOcr(base64, languageHints, env, true);
+  const rawText = wordsResultText(payload);
   return {
     text: normalizeText(rawText, 50000),
     items: extractItems(rawText)
@@ -538,6 +664,7 @@ export {
   normalizeEnglish,
   parseDataUrl,
   stripListMarker,
+  wordsResultText,
   handleFetch,
   resetRateLimits,
   base64DecodedByteLength

@@ -51,6 +51,41 @@ test('keeps English-only words and strips list numbering', () => {
   ]);
 });
 
+test('repairs common OCR letter/digit swaps and fullwidth text', () => {
+  assert.deepEqual(api.extractItems('1 app1e 苹果\nl00k after 照顾\nAPP1E 苹果'), [
+    { word: 'apple', meaning: '苹果' },
+    { word: 'look after', meaning: '照顾' }
+  ]);
+  assert.deepEqual(api.extractItems('ａｐｐｌｅ　苹果'), [
+    { word: 'apple', meaning: '苹果' }
+  ]);
+  assert.deepEqual(api.extractItems('CO2'), []);
+});
+
+test('groups Baidu boxes on one row and reads clear columns separately', () => {
+  const sameRow = api.wordsResultText({
+    words_result: [
+      { words: '苹果', location: { top: 12, left: 80, width: 36, height: 18 } },
+      { words: 'apple', location: { top: 10, left: 8, width: 48, height: 18 } }
+    ]
+  });
+  assert.equal(sameRow, 'apple 苹果');
+  assert.deepEqual(api.extractItems(sameRow), [{ word: 'apple', meaning: '苹果' }]);
+
+  const columns = api.wordsResultText({
+    words_result: [
+      { words: 'banana', location: { top: 10, left: 220, width: 60, height: 18 } },
+      { words: 'apple', location: { top: 10, left: 8, width: 48, height: 18 } },
+      { words: '香蕉', location: { top: 40, left: 220, width: 36, height: 18 } },
+      { words: '苹果', location: { top: 42, left: 8, width: 36, height: 18 } }
+    ]
+  });
+  assert.deepEqual(api.extractItems(columns), [
+    { word: 'apple', meaning: '苹果' },
+    { word: 'banana', meaning: '香蕉' }
+  ]);
+});
+
 test('rejects non-image data URLs', () => {
   assert.throws(() => api.parseDataUrl('data:text/plain;base64,SGVsbG8='), /JPEG/);
 });
@@ -154,7 +189,11 @@ test('either missing Baidu secret is not configured, and a Google key is ignored
   }
 });
 
-test('handler sends the image to Baidu handwriting and returns structured items', async () => {
+function ocrCalls(calls) {
+  return calls.filter(call => call.url.includes('/rest/2.0/ocr/'));
+}
+
+test('handler sends the image to Baidu accurate OCR and returns structured items', async () => {
   const mock = installBaiduFetch();
   const request = postRequest('https://example.test/api/ocr', {
     origin: 'https://example.test',
@@ -181,25 +220,54 @@ test('handler sends the image to Baidu handwriting and returns structured items'
   }
 
   const tokenCall = mock.calls.find(call => call.url.includes('/oauth/2.0/token'));
-  const ocrCall = mock.calls.find(call => call.url.includes('/handwriting'));
-  assert.equal(tokenCall.url, 'https://aip.baidubce.com/oauth/2.0/token');
-  assert.equal(tokenCall.options.redirect, 'manual');
+  const ocrCall = ocrCalls(mock.calls)[0];
+  const tokenUrl = new URL(tokenCall.url);
+  assert.equal(`${tokenUrl.origin}${tokenUrl.pathname}`, 'https://aip.baidubce.com/oauth/2.0/token');
+  assert.equal(tokenUrl.searchParams.get('grant_type'), 'client_credentials');
+  assert.equal(tokenUrl.searchParams.get('client_id'), 'test-api-key');
+  assert.equal(tokenUrl.searchParams.get('client_secret'), 'test-secret-key');
+  assert.equal(tokenCall.options.redirect, 'follow');
   const tokenForm = postedForm(tokenCall.options);
   assert.equal(tokenForm.get('grant_type'), 'client_credentials');
   assert.equal(tokenForm.get('client_id'), 'test-api-key');
   assert.equal(tokenForm.get('client_secret'), 'test-secret-key');
-  assert.doesNotMatch(tokenCall.url, /test-api-key|test-secret-key/);
 
   const ocrUrl = new URL(ocrCall.url);
-  assert.equal(`${ocrUrl.origin}${ocrUrl.pathname}`, 'https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting');
+  assert.equal(`${ocrUrl.origin}${ocrUrl.pathname}`, 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate');
   assert.equal(ocrUrl.searchParams.get('access_token'), 'tok-1');
-  assert.doesNotMatch(ocrCall.url, /test-api-key|test-secret-key|accurate_basic|vision\.googleapis/);
+  assert.equal(ocrCall.options.redirect, 'follow');
+  assert.doesNotMatch(ocrCall.url, /test-api-key|test-secret-key|handwriting|accurate_basic|vision\.googleapis/);
   const ocrForm = postedForm(ocrCall.options);
   assert.equal(ocrForm.get('image'), 'iVBORw0KGgo=');
-  assert.equal(ocrForm.get('eng_granularity'), 'word');
+  assert.equal(ocrForm.get('recognize_granularity'), 'big');
+  assert.equal(ocrForm.get('eng_granularity'), null);
   assert.equal(ocrForm.get('detect_direction'), 'true');
   assert.equal(ocrForm.get('language_type'), 'CHN_ENG');
   assert.equal(mock.calls.length, 2);
+});
+
+test('BAIDU_OCR_HANDWRITING switches the call to handwriting with whole-word English', async () => {
+  const mock = installBaiduFetch();
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.30' }
+    }), { ...BAIDU_ENV, BAIDU_OCR_HANDWRITING: ' true ' });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.provider, 'baidu-ocr');
+  } finally {
+    mock.restore();
+  }
+  const ocrCall = ocrCalls(mock.calls)[0];
+  const ocrUrl = new URL(ocrCall.url);
+  assert.equal(`${ocrUrl.origin}${ocrUrl.pathname}`, 'https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting');
+  const ocrForm = postedForm(ocrCall.options);
+  assert.equal(ocrForm.get('eng_granularity'), 'word');
+  assert.equal(ocrForm.get('detect_direction'), 'true');
+  assert.equal(ocrForm.get('language_type'), 'CHN_ENG');
+  assert.equal(ocrForm.get('recognize_granularity'), null);
+  assert.doesNotMatch(ocrCall.url, /test-api-key|test-secret-key/);
 });
 
 test('english-only language hints select ENG', async () => {
@@ -216,8 +284,9 @@ test('english-only language hints select ENG', async () => {
   } finally {
     mock.restore();
   }
-  const ocrCall = mock.calls.find(call => call.url.includes('/handwriting'));
+  const ocrCall = ocrCalls(mock.calls)[0];
   assert.equal(postedForm(ocrCall.options).get('language_type'), 'ENG');
+  assert.equal(new URL(ocrCall.url).pathname, '/rest/2.0/ocr/v1/accurate');
 });
 
 test('reuses a cached Baidu access token until it is near expiry', async () => {
@@ -234,7 +303,7 @@ test('reuses a cached Baidu access token until it is near expiry', async () => {
     mock.restore();
   }
   assert.equal(mock.calls.filter(call => call.url.includes('/oauth/2.0/token')).length, 1);
-  assert.equal(mock.calls.filter(call => call.url.includes('/handwriting')).length, 2);
+  assert.equal(ocrCalls(mock.calls).length, 2);
 });
 
 test('does not cache an access token that is already inside the refresh window', async () => {
@@ -311,8 +380,7 @@ test('refreshes an invalid access token once', async () => {
     mock.restore();
   }
   assert.equal(mock.calls.filter(call => call.url.includes('/oauth/2.0/token')).length, 2);
-  const tokens = mock.calls
-    .filter(call => call.url.includes('/handwriting'))
+  const tokens = ocrCalls(mock.calls)
     .map(call => new URL(call.url).searchParams.get('access_token'));
   assert.deepEqual(tokens, ['tok-1', 'tok-2']);
 });
@@ -502,12 +570,35 @@ test('token endpoint failures stay Chinese and do not echo the secret', async ()
     }), BAIDU_ENV);
     const body = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(body.error, 'OCR 上游服务失败，无法获取访问凭证');
-    assert.doesNotMatch(JSON.stringify(body), /test-secret-key|unknown client/);
+    assert.equal(body.error, 'OCR 上游服务失败，无法获取访问凭证（unknown client id）');
+    assert.doesNotMatch(JSON.stringify(body), /test-secret-key|test-api-key/);
   } finally {
     mock.restore();
   }
-  assert.equal(mock.calls.some(call => call.url.includes('/handwriting')), false);
+  assert.equal(ocrCalls(mock.calls).length, 0);
+});
+
+test('a token error that is only the secret stays generic', async () => {
+  const mock = installBaiduFetch({
+    onToken() {
+      return jsonResult(401, {
+        error: 'invalid_client',
+        error_description: 'test-secret-key'
+      });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.22' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(body.error, 'OCR 上游服务失败，无法获取访问凭证');
+    assert.doesNotMatch(JSON.stringify(body), /test-secret-key|test-api-key|invalid_client/);
+  } finally {
+    mock.restore();
+  }
 });
 
 test('Baidu image and quota errors use Chinese messages', async () => {
@@ -567,7 +658,45 @@ test('network failures do not return the token URL or secret', async () => {
   }
 });
 
-test('an empty handwriting result still returns text and items', async () => {
+test('an unopened accurate API names that service, and handwriting keeps its own message', async () => {
+  const accurate = installBaiduFetch({
+    onOcr() {
+      return jsonResult(200, { error_code: 6, error_msg: 'No permission to access data' });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.31' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(body.error, 'OCR 服务尚未开通高精度文字识别');
+    assert.doesNotMatch(body.error, /No permission|手写/);
+  } finally {
+    accurate.restore();
+  }
+
+  const handwriting = installBaiduFetch({
+    onOcr() {
+      return jsonResult(200, { error_code: 216102, error_msg: 'service not opened' });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.32' }
+    }), { ...BAIDU_ENV, BAIDU_OCR_HANDWRITING: '1' });
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(body.error, 'OCR 服务尚未开通手写识别');
+    assert.doesNotMatch(body.error, /service not opened/);
+  } finally {
+    handwriting.restore();
+  }
+});
+
+test('an empty OCR result still returns text and items', async () => {
   const mock = installBaiduFetch({ ocrPayload: { words_result: [], words_result_num: 0 } });
   try {
     const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
@@ -593,6 +722,14 @@ test('frontend calls a configurable Worker URL instead of Vercel', () => {
   assert.match(html, /window\.OCR_API_URL/);
   assert.match(html, /OCR 服务尚未配置/);
   assert.match(html, /function ocrUserMessage/);
+  assert.match(html, /尚未开通高精度/);
+  assert.match(html, /光线亮一些/);
+  assert.match(html, /createImageBitmap/);
+  const blank = fs.readFileSync(path.join(root, 'empty/index.html'), 'utf8');
+  assert.match(blank, /function ocrUserMessage/);
+  assert.match(blank, /尚未开通高精度/);
+  assert.match(blank, /光线亮一些/);
+  assert.match(blank, /src="\.\.\/config\.js"/);
   assert.match(html, /sourceIds/);
   assert.doesNotMatch(html, /vercel/i);
   assert.doesNotMatch(html, /\/api\/ocr/);
@@ -608,13 +745,17 @@ test('frontend calls a configurable Worker URL instead of Vercel', () => {
   assert.match(readme, /http:\/\/120\.77\.70\.33/);
   assert.match(readme, /https:\/\/tingxieyou\.cn/);
   assert.match(readme, /https:\/\/www\.tingxieyou\.cn/);
-  assert.match(readme, /ocr\/v1\/handwriting/);
+  assert.match(readme, /ocr\/v1\/accurate/);
+  assert.match(readme, /BAIDU_OCR_HANDWRITING/);
   assert.doesNotMatch(readme, /GOOGLE_VISION|Cloud Vision|vision\.googleapis/);
   assert.doesNotMatch(readme, /vercel\.app/i);
   const source = fs.readFileSync(path.join(root, 'src/index.js'), 'utf8');
   const wrangler = fs.readFileSync(path.join(root, 'wrangler.jsonc'), 'utf8');
+  assert.match(source, /aip\.baidubce\.com\/rest\/2\.0\/ocr\/v1\/accurate/);
   assert.match(source, /aip\.baidubce\.com\/rest\/2\.0\/ocr\/v1\/handwriting/);
   assert.match(source, /eng_granularity/);
+  assert.match(source, /BAIDU_OCR_HANDWRITING/);
+  assert.doesNotMatch(source, /accurate_basic/);
   assert.match(source, /extractItems\(rawText\)/);
   assert.doesNotMatch(source, /GOOGLE_VISION|vision\.googleapis|runVisionOcr/);
   assert.match(wrangler, /BAIDU_OCR_API_KEY/);
