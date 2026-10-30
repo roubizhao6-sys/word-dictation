@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>单词听写 · 智能听写模式</title>
+<meta name="ocr-endpoint" content="/api/ocr">
 <meta name="description" content="689 个手写笔记本单词 · 多种中文意思 + 音标 + 考试标签 · 听音写词 · 逐字母智能批改 · 错词本 · 艾宾浩斯复习 · 美音英音双发音">
 <meta property="og:title" content="单词听写 · 智能听写模式">
 <meta property="og:description" content="689 词 · 每词多种中文意思 · 听写/听选/看词选义 · 智能批改 · 错词本 · 记忆曲线">
@@ -217,6 +218,36 @@ html[data-theme="dark"] #toast{background:#16281f;color:#7fd7a6;border-color:#24
   #ansWord{font-size:24px}
   #typeIn,#mirror{font-size:23px}
   .page{padding:16px 14px 70px}
+}
+/* OCR 词本导入 */
+.ocrActions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 16px}
+.ocrStageWrap{display:flex;justify-content:center;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;overflow:hidden}
+.ocrStage{position:relative;display:inline-block;max-width:100%;line-height:0;overflow:hidden;border-radius:8px;touch-action:none}
+.ocrStage img{display:block;max-width:100%;max-height:55vh;width:auto;height:auto;pointer-events:none;user-select:none}
+.ocrCropBox{position:absolute;left:5%;top:5%;width:90%;height:90%;box-sizing:border-box;border:2px solid #fff;outline:1px solid var(--orange);box-shadow:0 0 0 9999px rgba(0,0,0,.48);cursor:move;touch-action:none}
+.ocrCropBox::after{content:"拖动框选单词区域";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11px;line-height:1.2;color:#fff;background:rgba(0,0,0,.55);padding:4px 7px;border-radius:999px;pointer-events:none;white-space:nowrap}
+.ocrHandle{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--orange);border:2px solid #fff;box-sizing:border-box;touch-action:none}
+.ocrHandle[data-dir="nw"]{left:-10px;top:-10px;cursor:nwse-resize}
+.ocrHandle[data-dir="ne"]{right:-10px;top:-10px;cursor:nesw-resize}
+.ocrHandle[data-dir="sw"]{left:-10px;bottom:-10px;cursor:nesw-resize}
+.ocrHandle[data-dir="se"]{right:-10px;bottom:-10px;cursor:nwse-resize}
+.ocrHint{font-size:12.5px;color:var(--tx2);line-height:1.65;margin-top:8px}
+.ocrProgress{display:flex;align-items:center;gap:9px;padding:14px;background:var(--orange-l);border-radius:10px;color:var(--orange);font-size:13px}
+.ocrProgress i{width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ocrReviewHead{display:grid;grid-template-columns:30px minmax(110px,.85fr) minmax(150px,1.4fr) 34px;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--line);font-size:12px;color:var(--tx2)}
+.ocrReviewRow{display:grid;grid-template-columns:30px minmax(110px,.85fr) minmax(150px,1.4fr) 34px;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--line)}
+.ocrReviewRow input[type=checkbox]{width:17px;height:17px;accent-color:var(--orange)}
+.ocrReviewRow input[type=text]{min-width:0;width:100%;font-size:13.5px;padding:8px 9px}
+.ocrReviewRow .icobtn{color:var(--tx3)}
+.ocrReviewRow .icobtn:hover{color:var(--wrong)}
+.ocrEmpty{text-align:center;color:var(--tx2);padding:30px 0;font-size:13.5px}
+@media (max-width:560px){
+  .ocrReviewHead{display:none}
+  .ocrReviewRow{grid-template-columns:26px 1fr 34px;gap:7px;align-items:start}
+  .ocrReviewRow input[type=text]{font-size:16px}
+  .ocrReviewRow input[type=text]:last-of-type{grid-column:2;margin-top:-2px}
+  .ocrReviewRow .icobtn{grid-column:3;grid-row:1 / span 2}
 }
 </style>
 </head>
@@ -501,10 +532,85 @@ function renderHome(tab){
   else if(tab==='wrong') renderWrong(body);
   else renderStats(body);
 }
-/* ---------- 我的生词（可添加、可保存、可备份） ---------- */
+/* ---------- 我的生词（IndexedDB，可添加、可保存、可备份） ---------- */
+const IDB_NAME='word_dictation_db';
+const IDB_STORE='custom_words';
+const IDB_VERSION=1;
 let custom=[];
-function loadCustom(){ try{ custom=JSON.parse(localStorage.getItem(LS+'_custom')||'[]'); }catch(e){ custom=[]; } }
-function saveCustom(){ try{ localStorage.setItem(LS+'_custom',JSON.stringify(custom)); }catch(e){} }
+let customSaveChain=Promise.resolve();
+function normalizeCustomEntries(list){
+  return (Array.isArray(list)?list:[]).filter(c=>c&&c.word).map((c,i)=>({
+    ...c,
+    id:c.id||('c'+Date.now().toString(36)+i+Math.random().toString(36).slice(2,5)),
+    word:String(c.word).trim(),
+    meaning:String(c.meaning||'').trim(),
+    hidden:!!c.hidden
+  }));
+}
+function openWordsDb(){
+  if(!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB unavailable'));
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(IDB_NAME,IDB_VERSION);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE,{keyPath:'id'});
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error('IndexedDB open failed'));
+  });
+}
+async function idbReadCustom(){
+  const db=await openWordsDb();
+  try{
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(IDB_STORE,'readonly');
+      const req=tx.objectStore(IDB_STORE).getAll();
+      req.onsuccess=()=>resolve(normalizeCustomEntries(req.result));
+      req.onerror=()=>reject(req.error||new Error('IndexedDB read failed'));
+    });
+  } finally { db.close(); }
+}
+async function idbWriteCustom(words){
+  const db=await openWordsDb();
+  try{
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(IDB_STORE,'readwrite');
+      const store=tx.objectStore(IDB_STORE);
+      store.clear();
+      normalizeCustomEntries(words).forEach(word=>store.put(word));
+      tx.oncomplete=()=>resolve();
+      tx.onerror=()=>reject(tx.error||new Error('IndexedDB write failed'));
+      tx.onabort=()=>reject(tx.error||new Error('IndexedDB write aborted'));
+    });
+  } finally { db.close(); }
+}
+function readLegacyCustom(){
+  try{ return normalizeCustomEntries(JSON.parse(localStorage.getItem(LS+'_custom')||'[]')); }
+  catch(e){ return []; }
+}
+async function loadCustom(){
+  try{
+    const stored=await idbReadCustom();
+    if(stored.length){ custom=stored; return; }
+    const legacy=readLegacyCustom();
+    if(legacy.length){
+      custom=legacy;
+      await idbWriteCustom(custom);
+      try{ localStorage.removeItem(LS+'_custom'); }catch(e){}
+      return;
+    }
+    custom=[];
+  }catch(e){
+    custom=readLegacyCustom();
+  }
+}
+function saveCustom(){
+  const snapshot=normalizeCustomEntries(custom);
+  customSaveChain=customSaveChain.then(()=>idbWriteCustom(snapshot)).catch(()=>{
+    try{ localStorage.setItem(LS+'_custom',JSON.stringify(snapshot)); }catch(e){}
+  });
+  return customSaveChain;
+}
 function rebuildCustom(){
   for(let i=WORDS.length-1;i>=0;i--){ if(WORDS[i].custom) WORDS.splice(i,1); }
   custom.forEach((c,k)=>WORDS.push({
@@ -528,9 +634,10 @@ function renderMine(body){
   body.innerHTML=`
     <div class="rowset" style="border:none;padding:6px 0 10px">
       <div><div class="lb">生词本 · ${ids.length} 个词</div>
-        <div class="sub">☆ 收藏的单词 + 你自己添加的单词，都会永久保存在这台电脑上</div></div>
+        <div class="sub">收藏、手输和拍照识别的单词都保存在这台设备的 IndexedDB 中</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn primary" id="addWordBtn">＋ 添加单词</button>
+        <button class="btn primary" id="ocrImportBtn">📷 拍照导入</button>
+        <button class="btn" id="addWordBtn">＋ 添加单词</button>
         <button class="btn" id="drillMine" ${ids.length?'':'disabled'}>练习本单</button>
       </div>
     </div>
@@ -538,7 +645,7 @@ function renderMine(body){
       <button class="btn sm" id="expBtn">导出备份</button>
       <button class="btn sm" id="impBtn">导入备份</button>
       <input type="file" id="impFile" accept=".json" class="hide">
-      <span class="sub" id="mineTip" style="margin-left:auto">数据保存在本机浏览器中</span>
+      <span class="sub" id="mineTip" style="margin-left:auto">词本保存在本机 IndexedDB</span>
     </div>
     <div id="mineRows"></div>`;
   const paint=()=>{
@@ -568,6 +675,7 @@ function renderMine(body){
     });
   };
   paint();
+  $('#ocrImportBtn').onclick=openOcrImport;
   $('#addWordBtn').onclick=openAddWord;
   $('#drillMine').onclick=()=>{ const ids2=mineIds(); if(ids2.length) startList(ids2,'生词本'); };
   $('#expBtn').onclick=exportAll;
@@ -597,7 +705,7 @@ function openAddWord(){
      <div style="display:flex;gap:10px;margin-top:14px"><button class="btn primary" id="aw_save">保存</button><button class="btn" data-x>取消</button></div>
    </div>`);
   el.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>el.remove());
-  el.querySelector('#aw_save').onclick=()=>{
+  el.querySelector('#aw_save').onclick=async ()=>{
     const bulk=el.querySelector('#aw_bulk').value.trim();
     let added=0;
     const push=(word,ipa,mean)=>{
@@ -618,8 +726,257 @@ function openAddWord(){
       });
     }
     if(!added){ alert('没有可添加的新单词（可能已存在）'); return; }
-    saveCustom(); rebuildCustom(); el.remove(); renderHome('mine');
+    await saveCustom(); rebuildCustom(); el.remove(); renderHome('mine');
     alert('已保存 '+added+' 个单词');
+  };
+}
+function ocrEndpoint(){
+  return (document.querySelector('meta[name="ocr-endpoint"]')?.content || '/api/ocr').trim();
+}
+function dataUrlBytes(dataUrl){
+  const comma=String(dataUrl).indexOf(',');
+  return comma<0?0:Math.ceil((dataUrl.length-comma-1)*.75);
+}
+function cleanOcrWord(value){
+  return String(value||'').replace(/^\s*\d{1,3}\s*[.)、:：\-]\s*/,'').replace(/\s+/g,' ').trim();
+}
+function openOcrImport(){
+  const el=mask(`<div class="sh"><h3>拍照导入单词本</h3><button class="icobtn" data-x>✕</button></div>
+    <div class="body">
+      <div class="ocrActions">
+        <button class="btn primary" id="ocrPick">上传图片</button>
+        <button class="btn" id="ocrCamera">拍照</button>
+        <button class="btn sm hide" id="ocrAgain">重新选择</button>
+        <input type="file" id="ocrFile" accept="image/*" class="hide">
+        <input type="file" id="ocrCameraFile" accept="image/*" capture="environment" class="hide">
+      </div>
+      <div id="ocrIntro" class="ocrHint">拍摄或上传手写单词本页面。图片只会在你点击“识别”时发送到服务端 OCR，识别结果确认后才会保存到本机 IndexedDB。</div>
+      <div id="ocrWorkspace" class="hide">
+        <div class="ocrStageWrap"><div class="ocrStage" id="ocrStage">
+          <img id="ocrImage" alt="待识别图片">
+          <div class="ocrCropBox" id="ocrCropBox">
+            <span class="ocrHandle" data-dir="nw"></span><span class="ocrHandle" data-dir="ne"></span>
+            <span class="ocrHandle" data-dir="sw"></span><span class="ocrHandle" data-dir="se"></span>
+          </div>
+        </div></div>
+        <div class="ocrHint">拖动白框选择需要识别的区域，拖动四角可调整大小。默认会保留整页。</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn primary" id="ocrRun">识别选中区域</button>
+          <button class="btn" id="ocrReset">重置裁剪</button>
+        </div>
+      </div>
+      <div id="ocrProgress" class="ocrProgress hide"><i></i><span>正在识别，请稍候…</span></div>
+      <div id="ocrError" class="ocrHint hide" style="color:var(--wrong)"></div>
+      <div id="ocrReview" class="hide" style="margin-top:14px">
+        <div class="rowset" style="border:none;padding:0 0 8px"><div><div class="lb">确认识别结果</div><div class="sub">可修改单词和中文，取消勾选可跳过条目</div></div><button class="btn sm" id="ocrAddRow">＋ 一行</button></div>
+        <div class="ocrReviewHead"><span></span><span>英文单词</span><span>中文释义（可选）</span><span></span></div>
+        <div id="ocrRows"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
+          <button class="btn" id="ocrBack">重新裁剪</button>
+          <button class="btn primary" id="ocrSave">确认保存</button>
+        </div>
+      </div>
+    </div>`);
+  const fileInput=el.querySelector('#ocrFile');
+  const cameraInput=el.querySelector('#ocrCameraFile');
+  const stage=el.querySelector('#ocrStage');
+  const img=el.querySelector('#ocrImage');
+  const box=el.querySelector('#ocrCropBox');
+  const workspace=el.querySelector('#ocrWorkspace');
+  const intro=el.querySelector('#ocrIntro');
+  const progress=el.querySelector('#ocrProgress');
+  const errorBox=el.querySelector('#ocrError');
+  const review=el.querySelector('#ocrReview');
+  const rows=el.querySelector('#ocrRows');
+  let objectUrl='', crop=null, drag=null, lastItems=[];
+
+  const cleanupObserver=new MutationObserver(()=>{
+    if(!document.body.contains(el)){
+      if(objectUrl) URL.revokeObjectURL(objectUrl);
+      cleanupObserver.disconnect();
+    }
+  });
+  cleanupObserver.observe(document.body,{childList:true,subtree:true});
+  el.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>el.remove());
+
+  const setError=message=>{ errorBox.textContent=message||''; errorBox.classList.toggle('hide',!message); };
+  const setBusy=busy=>{ progress.classList.toggle('hide',!busy); el.querySelector('#ocrRun').disabled=busy; el.querySelector('#ocrSave').disabled=busy; };
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  function applyCrop(){
+    if(!crop) return;
+    box.style.left=crop.x+'px'; box.style.top=crop.y+'px'; box.style.width=crop.w+'px'; box.style.height=crop.h+'px';
+  }
+  function resetCrop(){
+    const w=stage.clientWidth, h=stage.clientHeight;
+    if(!w||!h) return;
+    crop={x:w*.05,y:h*.05,w:w*.9,h:h*.9};
+    applyCrop();
+  }
+  function loadImage(file){
+    if(!file) return;
+    if(!/^image\//.test(file.type)){ setError('请选择图片文件'); return; }
+    setError(''); review.classList.add('hide'); lastItems=[];
+    if(objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl=URL.createObjectURL(file);
+    img.onload=()=>{
+      workspace.classList.remove('hide');
+      intro.classList.add('hide');
+      el.querySelector('#ocrAgain').classList.remove('hide');
+      requestAnimationFrame(resetCrop);
+    };
+    img.onerror=()=>setError('图片读取失败，请换一张图片');
+    img.src=objectUrl;
+  }
+  el.querySelector('#ocrPick').onclick=()=>fileInput.click();
+  el.querySelector('#ocrCamera').onclick=()=>cameraInput.click();
+  el.querySelector('#ocrAgain').onclick=()=>fileInput.click();
+  fileInput.onchange=e=>{ loadImage(e.target.files[0]); e.target.value=''; };
+  cameraInput.onchange=e=>{ loadImage(e.target.files[0]); e.target.value=''; };
+  el.querySelector('#ocrReset').onclick=resetCrop;
+
+  box.addEventListener('pointerdown',e=>{
+    if(!crop) return;
+    e.preventDefault();
+    const dir=e.target.dataset.dir||'move';
+    drag={dir,startX:e.clientX,startY:e.clientY,x:crop.x,y:crop.y,w:crop.w,h:crop.h,sw:stage.clientWidth,sh:stage.clientHeight,id:e.pointerId};
+    box.setPointerCapture(e.pointerId);
+  });
+  box.addEventListener('pointermove',e=>{
+    if(!drag||drag.id!==e.pointerId) return;
+    e.preventDefault();
+    const dx=e.clientX-drag.startX, dy=e.clientY-drag.startY;
+    const min=Math.min(54,Math.max(30,Math.min(drag.sw,drag.sh)*.18));
+    let x=drag.x,y=drag.y,w=drag.w,h=drag.h;
+    if(drag.dir==='move'){
+      x=clamp(drag.x+dx,0,drag.sw-drag.w);
+      y=clamp(drag.y+dy,0,drag.sh-drag.h);
+    }else{
+      let left=drag.x,top=drag.y,right=drag.x+drag.w,bottom=drag.y+drag.h;
+      if(drag.dir.includes('w')) left=clamp(drag.x+dx,0,right-min);
+      if(drag.dir.includes('e')) right=clamp(drag.x+drag.w+dx,left+min,drag.sw);
+      if(drag.dir.includes('n')) top=clamp(drag.y+dy,0,bottom-min);
+      if(drag.dir.includes('s')) bottom=clamp(drag.y+drag.h+dy,top+min,drag.sh);
+      x=left; y=top; w=right-left; h=bottom-top;
+    }
+    crop={x,y,w,h}; applyCrop();
+  });
+  const endDrag=e=>{ if(drag&&drag.id===e.pointerId) drag=null; };
+  box.addEventListener('pointerup',endDrag);
+  box.addEventListener('pointercancel',endDrag);
+
+  function renderReview(items){
+    lastItems=Array.isArray(items)?items.slice():[];
+    rows.innerHTML='';
+    if(!lastItems.length){
+      rows.innerHTML='<div class="ocrEmpty">没有自动提取到单词。可以重新裁剪，或手动添加一行。</div>';
+    }
+    lastItems.forEach(item=>addReviewRow(item));
+    review.classList.remove('hide');
+    workspace.classList.add('hide');
+  }
+  function addReviewRow(item={}){
+    const row=document.createElement('div');
+    row.className='ocrReviewRow';
+    row.innerHTML=`<input type="checkbox" checked aria-label="保存此词">
+      <input type="text" class="ocrWord" aria-label="英文单词" maxlength="80" placeholder="英文单词" value="${esc(item.word||'')}">
+      <input type="text" class="ocrMeaning" aria-label="中文释义" maxlength="240" placeholder="中文释义（可选）" value="${esc(item.meaning||'')}">
+      <button class="icobtn" type="button" aria-label="删除此行">${ICON.trash}</button>`;
+    row.querySelector('button').onclick=()=>row.remove();
+    rows.appendChild(row);
+    return row;
+  }
+  el.querySelector('#ocrAddRow').onclick=()=>addReviewRow();
+  el.querySelector('#ocrBack').onclick=()=>{ review.classList.add('hide'); workspace.classList.remove('hide'); };
+
+  function makeCropDataUrl(){
+    if(!crop||!img.naturalWidth||!img.naturalHeight) throw new Error('请先选择图片并框选区域');
+    const sw=stage.clientWidth, sh=stage.clientHeight;
+    const sx=clamp(crop.x,0,sw)/sw*img.naturalWidth;
+    const sy=clamp(crop.y,0,sh)/sh*img.naturalHeight;
+    const sourceW=clamp(crop.w,1,sw-crop.x)/sw*img.naturalWidth;
+    const sourceH=clamp(crop.h,1,sh-crop.y)/sh*img.naturalHeight;
+    const maxSide=1800;
+    const ratio=Math.min(1,maxSide/Math.max(sourceW,sourceH));
+    const outW=Math.max(1,Math.round(sourceW*ratio)), outH=Math.max(1,Math.round(sourceH*ratio));
+    const canvas=document.createElement('canvas'); canvas.width=outW; canvas.height=outH;
+    const ctx=canvas.getContext('2d',{alpha:false});
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,outW,outH);
+    try{ ctx.filter='grayscale(1) contrast(1.16)'; }catch(e){}
+    ctx.drawImage(img,sx,sy,sourceW,sourceH,0,0,outW,outH);
+    let data=canvas.toDataURL('image/jpeg',.88);
+    if(dataUrlBytes(data)>2.5*1024*1024){
+      const c2=document.createElement('canvas');
+      const r2=Math.min(1,1400/Math.max(outW,outH));
+      c2.width=Math.max(1,Math.round(outW*r2)); c2.height=Math.max(1,Math.round(outH*r2));
+      const x2=c2.getContext('2d',{alpha:false}); x2.fillStyle='#fff'; x2.fillRect(0,0,c2.width,c2.height);
+      try{ x2.filter='grayscale(1) contrast(1.16)'; }catch(e){}
+      x2.drawImage(canvas,0,0,c2.width,c2.height);
+      data=c2.toDataURL('image/jpeg',.8);
+    }
+    if(dataUrlBytes(data)>2.7*1024*1024) throw new Error('裁剪后的图片仍然过大，请缩小裁剪范围');
+    return data;
+  }
+
+  el.querySelector('#ocrRun').onclick=async()=>{
+    setError('');
+    if(location.protocol==='file:'){ setError('离线打开时无法调用 OCR；请使用 Vercel 部署地址，手输单词仍可离线使用'); return; }
+    let imageData;
+    try{ imageData=makeCropDataUrl(); }
+    catch(e){ setError(e.message); return; }
+    setBusy(true);
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),45000);
+    try{
+      const response=await fetch(ocrEndpoint(),{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({image:imageData,languageHints:['en','zh-Hans']}),
+        signal:controller.signal
+      });
+      const payload=await response.json().catch(()=>({}));
+      if(response.status===404) throw new Error('OCR 服务未部署：请使用 Vercel 地址；GitHub Pages 不支持 /api/ocr');
+      if(!response.ok) throw new Error(payload.error||('OCR 请求失败（'+response.status+'）'));
+      renderReview(payload.items||[]);
+      showToast('识别完成，请确认后保存');
+    }catch(e){
+      setError(e.name==='AbortError'?'识别超时，请重试':(e.message||'OCR 识别失败'));
+    }finally{
+      clearTimeout(timer); setBusy(false);
+    }
+  };
+
+  el.querySelector('#ocrSave').onclick=async()=>{
+    const entries=[];
+    rows.querySelectorAll('.ocrReviewRow').forEach(row=>{
+      if(!row.querySelector('input[type=checkbox]').checked) return;
+      const word=cleanOcrWord(row.querySelector('.ocrWord').value);
+      const meaning=row.querySelector('.ocrMeaning').value.trim();
+      if(word) entries.push({word,meaning});
+    });
+    if(!entries.length){ setError('请至少保留一个单词'); return; }
+    const existing=new Set(WORDS.filter(w=>!w.hidden).map(w=>w.word.toLowerCase()));
+    const additions=[];
+    entries.forEach(item=>{
+      const key=item.word.toLowerCase();
+      if(existing.has(key)) return;
+      existing.add(key);
+      additions.push({
+        id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+        word:item.word.slice(0,80), meaning:item.meaning.slice(0,240),
+        ipa_us:'', ipa_gb:'', pos:'', hidden:false, source:'ocr', createdAt:Date.now()
+      });
+    });
+    if(!additions.length){ setError('这些单词已经在词本或内置词库中'); return; }
+    custom.push(...additions);
+    setBusy(true);
+    try{
+      await saveCustom();
+      rebuildCustom();
+      el.remove();
+      renderHome('mine');
+      showToast('已保存 '+additions.length+' 个 OCR 单词');
+    }catch(e){
+      setError('保存失败，请稍后再试');
+    }finally{ setBusy(false); }
   };
 }
 function exportAll(){
@@ -1262,9 +1619,9 @@ function onKey(e){
   if(k==='Shift'&&D.phase==='fix'){ D.phase='ask'; D.idx++; nextQuestion(); return; }
 }
 /* ---------- 启动 ---------- */
-function init(){
+async function init(){
   load();
-  loadCustom();
+  await loadCustom();
   rebuildCustom();
   applyTheme();
   try{ notes=JSON.parse(localStorage.getItem(LS+'_notes')||'{}'); }catch(e){ notes={}; }
