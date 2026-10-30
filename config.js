@@ -6,6 +6,7 @@
 // https://YOUR_SUBDOMAIN.workers.dev
 // Example: https://word-dictation-ocr.<account>.workers.dev
 //
-// The Worker allows https://roubizhao6-sys.github.io by default
-// (OCR_ALLOWED_ORIGINS in wrangler.jsonc). Origins do not include a path.
+// Allowed browser origins are OCR_ALLOWED_ORIGINS in wrangler.jsonc:
+// https://roubizhao6-sys.github.io, tingxieyou.cn, and http://120.77.70.33.
+// Origins omit the path.
 window.OCR_API_URL = "https://word-dictation-ocr.roubizhao6.workers.dev";

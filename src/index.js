@@ -13,15 +13,33 @@ const RATE_LIMIT = 10;
 const DEFAULT_ALLOWED_ORIGINS = 'https://roubizhao6-sys.github.io';
 const ALLOWED_IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const ALLOWED_LANGUAGES = new Set(['en', 'zh-Hans', 'zh-Hant']);
+const BAIDU_TOKEN_URL = 'https://aip.baidubce.com/oauth/2.0/token';
+// Notebook photos are handwritten Chinese plus English. Baidu's handwriting
+// endpoint is built for that; accurate_basic targets printed text. The
+// handwriting API splits English into letters unless eng_granularity=word,
+// which would break word-pair parsing.
+// https://cloud.baidu.com/doc/OCR/s/hk3h7y2qq
+const BAIDU_HANDWRITING_URL = 'https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting';
+const TOKEN_SKEW_MS = 5 * 60 * 1000;
 
 // Per-isolate counters only. Isolates do not share memory, matching the old
 // serverless limit (best-effort, not a global quota). Values are counts, not
 // request objects.
 const buckets = new Map();
 
-function httpError(status, message) {
+// Isolate-local access_token cache. Isolates do not share memory. This holds
+// the token and its expiry only, not photos or request bodies.
+const baiduToken = {
+  value: '',
+  expiresAt: 0,
+  tag: ''
+};
+let tokenQueue = Promise.resolve();
+
+function httpError(status, message, upstreamCode) {
   const error = new Error(message);
   error.status = status;
+  if (upstreamCode) error.upstreamCode = upstreamCode;
   return error;
 }
 
@@ -238,8 +256,20 @@ function checkRateLimit(request) {
   return { ok: false, retryAfter: Math.max(1, Math.ceil((current.resetAt - now) / 1000)) };
 }
 
+function invalidateBaiduToken() {
+  baiduToken.value = '';
+  baiduToken.expiresAt = 0;
+  baiduToken.tag = '';
+}
+
+function resetBaiduTokenCache() {
+  invalidateBaiduToken();
+  tokenQueue = Promise.resolve();
+}
+
 function resetRateLimits() {
   buckets.clear();
+  resetBaiduTokenCache();
 }
 
 async function readJsonBody(request) {
@@ -273,50 +303,151 @@ async function readJsonBody(request) {
   }
 }
 
-async function runVisionOcr(base64, languageHints, env) {
-  // TODO(baidu-ocr): keep this Google Vision call behind the same { text, items }
-  // result. Mainland product direction is a Baidu OCR adapter; do not remove the
-  // page's photo → review → wordbook flow when that swap happens.
-  const apiKey = env && env.GOOGLE_VISION_API_KEY;
-  if (!apiKey) throw httpError(503, 'OCR 服务尚未配置');
+function baiduLanguageType(languageHints) {
+  const hints = new Set(languageHints || []);
+  const chinese = hints.has('zh-Hans') || hints.has('zh-Hant');
+  const english = hints.has('en');
+  if (english && !chinese) return 'ENG';
+  return 'CHN_ENG';
+}
 
-  const response = await fetch('https://vision.googleapis.com/v1/images:annotate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': apiKey
-    },
-    body: JSON.stringify({
-      requests: [{
-        image: { content: base64 },
-        features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
-        imageContext: { languageHints }
-      }]
-    })
+function isBaiduTokenError(payload) {
+  const code = Number(payload && payload.error_code);
+  return code === 100 || code === 110 || code === 111;
+}
+
+function baiduOcrError(payload, httpStatus) {
+  const code = Number(payload && payload.error_code);
+  if (code === 216201) return httpError(400, '图片格式不受支持，请使用 JPEG 或 PNG', code);
+  if (code === 216202) return httpError(400, '图片过大或分辨率过高，请重新裁剪后再试', code);
+  if (code === 216200) return httpError(400, '图片内容为空', code);
+  if (code === 17 || code === 19) return httpError(502, 'OCR 调用次数已达上限，请稍后再试', code);
+  if (code === 4 || code === 18) return httpError(502, 'OCR 调用过于频繁，请稍后再试', code);
+  if (code === 6 || code === 216102) return httpError(502, 'OCR 服务尚未开通手写识别', code);
+  if (code === 100 || code === 110 || code === 111) return httpError(502, 'OCR 上游服务失败，访问凭证无效', code);
+  if (code) return httpError(502, `OCR 上游服务失败（${code}）`, code);
+  return httpError(502, `OCR 上游服务失败（${httpStatus || 502}）`);
+}
+
+function handwritingText(payload) {
+  const rows = Array.isArray(payload && payload.words_result) ? payload.words_result : [];
+  const lines = rows.map(row => ({
+    words: String(row && row.words || '').trim(),
+    top: Number(row && row.location && row.location.top),
+    left: Number(row && row.location && row.location.left)
+  })).filter(row => row.words);
+  const positioned = lines.every(row => Number.isFinite(row.top) && Number.isFinite(row.left));
+  if (positioned && lines.length > 1) {
+    lines.sort((a, b) => (a.top - b.top) || (a.left - b.left));
+  }
+  return lines.map(row => row.words).join('\n');
+}
+
+async function credentialTag(apiKey, secretKey) {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(`${apiKey}\n${secretKey}`)
+  );
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function baiduCredentials(env) {
+  return {
+    apiKey: String(env && env.BAIDU_OCR_API_KEY || '').trim(),
+    secretKey: String(env && env.BAIDU_OCR_SECRET_KEY || '').trim()
+  };
+}
+
+async function requestBaiduAccessToken(apiKey, secretKey, tag) {
+  // Credentials stay in the POST body. Baidu still requires the resulting
+  // access_token on the OCR URL; the API key and secret never go there.
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: apiKey,
+    client_secret: secretKey
   });
-
+  const response = await fetch(BAIDU_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+    redirect: 'manual',
+    cache: 'no-store'
+  });
+  if (response.status >= 300 && response.status < 400) {
+    throw httpError(502, 'OCR 上游服务失败，无法获取访问凭证');
+  }
   const payload = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw httpError(502, payload?.error?.message || `OCR 上游服务失败（${response.status}）`);
+  const accessToken = payload && payload.access_token;
+  if (!response.ok || typeof accessToken !== 'string' || !accessToken) {
+    throw httpError(502, 'OCR 上游服务失败，无法获取访问凭证');
   }
 
-  const result = payload?.responses?.[0];
-  if (result?.error?.message) throw httpError(502, result.error.message);
+  const expiresInMs = Number(payload.expires_in) * 1000;
+  const ttl = Number.isFinite(expiresInMs) && expiresInMs > TOKEN_SKEW_MS
+    ? expiresInMs - TOKEN_SKEW_MS
+    : 0;
+  if (ttl > 0) {
+    baiduToken.value = accessToken;
+    baiduToken.expiresAt = Date.now() + ttl;
+    baiduToken.tag = tag;
+  }
+  return accessToken;
+}
 
-  const blocks = result?.fullTextAnnotation?.pages?.flatMap(page =>
-    (page.blocks || []).flatMap(block =>
-      (block.paragraphs || []).flatMap(paragraph =>
-        (paragraph.words || []).map(word =>
-          (word.symbols || []).map(symbol => symbol.text || '').join('')
-        )
-      )
-    )
-  );
-  const rawText = result?.fullTextAnnotation?.text || result?.textAnnotations?.[0]?.description || blocks?.join('\n') || '';
-  const text = normalizeText(rawText, 50000);
+async function loadCachedToken(apiKey, secretKey) {
+  const tag = await credentialTag(apiKey, secretKey);
+  if (baiduToken.tag === tag && baiduToken.value && baiduToken.expiresAt > Date.now()) {
+    return baiduToken.value;
+  }
+  return requestBaiduAccessToken(apiKey, secretKey, tag);
+}
 
+function getBaiduAccessToken(env) {
+  const { apiKey, secretKey } = baiduCredentials(env);
+  if (!apiKey || !secretKey) return Promise.reject(httpError(503, 'OCR 服务尚未配置'));
+
+  // Serialize token loads so concurrent photos share one request.
+  const run = tokenQueue.then(() => loadCachedToken(apiKey, secretKey));
+  tokenQueue = run.then(() => undefined, () => undefined);
+  return run;
+}
+
+async function callHandwriting(base64, languageHints, env, allowRefresh) {
+  const accessToken = await getBaiduAccessToken(env);
+  const url = new URL(BAIDU_HANDWRITING_URL);
+  url.searchParams.set('access_token', accessToken);
+  const body = new URLSearchParams({
+    image: base64,
+    eng_granularity: 'word',
+    detect_direction: 'true',
+    language_type: baiduLanguageType(languageHints)
+  });
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+    redirect: 'manual',
+    cache: 'no-store'
+  });
+  if (response.status >= 300 && response.status < 400) {
+    throw httpError(502, `OCR 上游服务失败（${response.status}）`);
+  }
+  const payload = await response.json().catch(() => null);
+  if (allowRefresh && isBaiduTokenError(payload)) {
+    invalidateBaiduToken();
+    return callHandwriting(base64, languageHints, env, false);
+  }
+  if (!response.ok || !payload || payload.error_code) {
+    throw baiduOcrError(payload, response.status);
+  }
+  return payload;
+}
+
+async function runBaiduOcr(base64, languageHints, env) {
+  const payload = await callHandwriting(base64, languageHints, env, true);
+  const rawText = handwritingText(payload);
   return {
-    text,
+    text: normalizeText(rawText, 50000),
     items: extractItems(rawText)
   };
 }
@@ -364,7 +495,7 @@ async function handleFetch(request, env) {
       ? body.languageHints.filter(value => ALLOWED_LANGUAGES.has(value))
       : [];
     const languageHints = requestedLanguages.length ? requestedLanguages : ['en', 'zh-Hans'];
-    const result = await runVisionOcr(image.base64, languageHints, env);
+    const result = await runBaiduOcr(image.base64, languageHints, env);
     logEvent('info', {
       message: 'ocr complete',
       status: 200,
@@ -372,7 +503,7 @@ async function handleFetch(request, env) {
       items: result.items.length
     });
     return jsonResponse({
-      provider: 'google-vision',
+      provider: 'baidu-ocr',
       text: result.text,
       items: result.items,
       imageBytes: image.byteLength
@@ -384,7 +515,8 @@ async function handleFetch(request, env) {
       : error.message || 'OCR 识别失败';
     logEvent(status >= 500 ? 'error' : 'warn', {
       message: 'ocr failed',
-      status
+      status,
+      upstreamCode: error.upstreamCode
     });
     return jsonResponse({ error: message }, status, origin);
   }
