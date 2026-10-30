@@ -7,8 +7,9 @@ second URL:
 
   https://roubizhao6-sys.github.io/word-dictation/empty/
 
-OCR keeps using the root config.js (../config.js). The Worker allowlist is
-the github.io origin, which covers both paths.
+OCR keeps using the root config.js (../config.js). The Worker allowlist
+includes the github.io origin, which covers both GitHub Pages paths, plus
+tingxieyou.cn and http://120.77.70.33.
 
 Re-run from the repo root after changing the root page:
 

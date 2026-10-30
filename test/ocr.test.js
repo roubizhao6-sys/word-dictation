@@ -63,6 +63,52 @@ test('base64 size matches Node Buffer.byteLength', () => {
 });
 
 const SAMPLE_IMAGE = 'data:image/png;base64,iVBORw0KGgo=';
+const BAIDU_ENV = {
+  BAIDU_OCR_API_KEY: 'test-api-key',
+  BAIDU_OCR_SECRET_KEY: 'test-secret-key'
+};
+
+function jsonResult(status, payload) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => payload
+  };
+}
+
+function installBaiduFetch({ tokenPayload, ocrPayload, onToken, onOcr } = {}) {
+  const originalFetch = global.fetch;
+  const calls = [];
+  let tokenCount = 0;
+  let ocrCount = 0;
+  global.fetch = async (url, options) => {
+    const entry = { url: String(url), options };
+    calls.push(entry);
+    if (entry.url.includes('/oauth/2.0/token')) {
+      tokenCount += 1;
+      if (onToken) return onToken(entry, tokenCount);
+      return jsonResult(200, tokenPayload || { access_token: `tok-${tokenCount}`, expires_in: 2592000 });
+    }
+    ocrCount += 1;
+    if (onOcr) return onOcr(entry, ocrCount);
+    return jsonResult(200, ocrPayload || {
+      words_result: [
+        { words: 'banana 香蕉', location: { top: 80, left: 4 } },
+        { words: 'apple 苹果', location: { top: 12, left: 6 } }
+      ]
+    });
+  };
+  return {
+    calls,
+    restore() {
+      global.fetch = originalFetch;
+    }
+  };
+}
+
+function postedForm(options) {
+  return new URLSearchParams(options.body);
+}
 
 function postRequest(url, { origin, body, headers = {}, method = 'POST' } = {}) {
   const payload = body === undefined ? JSON.stringify({ image: SAMPLE_IMAGE }) : body;
@@ -86,27 +132,30 @@ test('handler returns 503 when the server key is missing', async () => {
   const body = await response.json();
   assert.equal(response.status, 503);
   assert.equal(body.error, 'OCR 服务尚未配置');
-  assert.doesNotMatch(body.error, /GOOGLE_VISION_API_KEY|AIza/);
+  assert.doesNotMatch(body.error, /GOOGLE_VISION_API_KEY|BAIDU_OCR|AIza/);
   assert.equal(response.headers.get('access-control-allow-origin'), 'https://example.test');
   assert.equal(response.headers.get('cache-control'), 'no-store');
 });
 
-test('handler sends the image to Vision and returns structured items', async () => {
-  const originalFetch = global.fetch;
-  let upstreamRequest;
-  global.fetch = async (url, options) => {
-    upstreamRequest = { url: String(url), options };
-    return {
-      ok: true,
-      status: 200,
-      json: async () => ({
-        responses: [{
-          fullTextAnnotation: { text: 'apple 苹果\nbanana 香蕉' }
-        }]
-      })
-    };
-  };
+test('either missing Baidu secret is not configured, and a Google key is ignored', async () => {
+  for (const env of [
+    { BAIDU_OCR_API_KEY: 'only-api' },
+    { BAIDU_OCR_SECRET_KEY: 'only-secret' },
+    { GOOGLE_VISION_API_KEY: 'test-only-key' }
+  ]) {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.40' }
+    }), env);
+    const body = await response.json();
+    assert.equal(response.status, 503);
+    assert.equal(body.error, 'OCR 服务尚未配置');
+    assert.doesNotMatch(body.error, /only-api|only-secret|test-only-key|GOOGLE|BAIDU/);
+  }
+});
 
+test('handler sends the image to Baidu handwriting and returns structured items', async () => {
+  const mock = installBaiduFetch();
   const request = postRequest('https://example.test/api/ocr', {
     origin: 'https://example.test',
     body: JSON.stringify({
@@ -117,10 +166,10 @@ test('handler sends the image to Vision and returns structured items', async () 
   });
 
   try {
-    const response = await api.handleFetch(request, { GOOGLE_VISION_API_KEY: 'test-only-key' });
+    const response = await api.handleFetch(request, BAIDU_ENV);
     const body = await response.json();
     assert.equal(response.status, 200);
-    assert.equal(body.provider, 'google-vision');
+    assert.equal(body.provider, 'baidu-ocr');
     assert.equal(body.text, 'apple 苹果 banana 香蕉');
     assert.equal(body.imageBytes, 8);
     assert.deepEqual(body.items, [
@@ -128,15 +177,168 @@ test('handler sends the image to Vision and returns structured items', async () 
       { word: 'banana', meaning: '香蕉' }
     ]);
   } finally {
-    global.fetch = originalFetch;
+    mock.restore();
   }
 
-  const upstreamBody = JSON.parse(upstreamRequest.options.body);
-  assert.match(upstreamRequest.url, /vision\.googleapis\.com\/v1\/images:annotate$/);
-  assert.equal(upstreamRequest.options.headers['X-Goog-Api-Key'], 'test-only-key');
-  assert.doesNotMatch(upstreamRequest.url, /test-only-key/);
-  assert.deepEqual(upstreamBody.requests[0].imageContext.languageHints, ['en', 'zh-Hans']);
-  assert.equal(upstreamBody.requests[0].image.content, 'iVBORw0KGgo=');
+  const tokenCall = mock.calls.find(call => call.url.includes('/oauth/2.0/token'));
+  const ocrCall = mock.calls.find(call => call.url.includes('/handwriting'));
+  assert.equal(tokenCall.url, 'https://aip.baidubce.com/oauth/2.0/token');
+  assert.equal(tokenCall.options.redirect, 'manual');
+  const tokenForm = postedForm(tokenCall.options);
+  assert.equal(tokenForm.get('grant_type'), 'client_credentials');
+  assert.equal(tokenForm.get('client_id'), 'test-api-key');
+  assert.equal(tokenForm.get('client_secret'), 'test-secret-key');
+  assert.doesNotMatch(tokenCall.url, /test-api-key|test-secret-key/);
+
+  const ocrUrl = new URL(ocrCall.url);
+  assert.equal(`${ocrUrl.origin}${ocrUrl.pathname}`, 'https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting');
+  assert.equal(ocrUrl.searchParams.get('access_token'), 'tok-1');
+  assert.doesNotMatch(ocrCall.url, /test-api-key|test-secret-key|accurate_basic|vision\.googleapis/);
+  const ocrForm = postedForm(ocrCall.options);
+  assert.equal(ocrForm.get('image'), 'iVBORw0KGgo=');
+  assert.equal(ocrForm.get('eng_granularity'), 'word');
+  assert.equal(ocrForm.get('detect_direction'), 'true');
+  assert.equal(ocrForm.get('language_type'), 'CHN_ENG');
+  assert.equal(mock.calls.length, 2);
+});
+
+test('english-only language hints select ENG', async () => {
+  const mock = installBaiduFetch({
+    ocrPayload: { words_result: [{ words: 'apple' }] }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      body: JSON.stringify({ image: SAMPLE_IMAGE, languageHints: ['en', 'fr'] }),
+      headers: { 'x-forwarded-for': '203.0.113.11' }
+    }), BAIDU_ENV);
+    assert.equal(response.status, 200);
+  } finally {
+    mock.restore();
+  }
+  const ocrCall = mock.calls.find(call => call.url.includes('/handwriting'));
+  assert.equal(postedForm(ocrCall.options).get('language_type'), 'ENG');
+});
+
+test('reuses a cached Baidu access token until it is near expiry', async () => {
+  const mock = installBaiduFetch();
+  try {
+    for (let i = 0; i < 2; i += 1) {
+      const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+        origin: 'https://example.test',
+        headers: { 'x-forwarded-for': '203.0.113.12' }
+      }), BAIDU_ENV);
+      assert.equal(response.status, 200);
+    }
+  } finally {
+    mock.restore();
+  }
+  assert.equal(mock.calls.filter(call => call.url.includes('/oauth/2.0/token')).length, 1);
+  assert.equal(mock.calls.filter(call => call.url.includes('/handwriting')).length, 2);
+});
+
+test('does not cache an access token that is already inside the refresh window', async () => {
+  const mock = installBaiduFetch({
+    tokenPayload: { access_token: 'short-lived', expires_in: 30 }
+  });
+  try {
+    for (let i = 0; i < 2; i += 1) {
+      const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+        origin: 'https://example.test',
+        headers: { 'x-forwarded-for': '203.0.113.13' }
+      }), BAIDU_ENV);
+      assert.equal(response.status, 200);
+    }
+  } finally {
+    mock.restore();
+  }
+  assert.equal(mock.calls.filter(call => call.url.includes('/oauth/2.0/token')).length, 2);
+});
+
+test('concurrent photos share one token request', async () => {
+  let release = () => {};
+  const gate = new Promise(resolve => { release = resolve; });
+  let tokenCalls = 0;
+  const mock = installBaiduFetch({
+    async onToken() {
+      tokenCalls += 1;
+      await gate;
+      return jsonResult(200, { access_token: 'shared-token', expires_in: 2592000 });
+    }
+  });
+  const pending = Promise.all([0, 1].map(index => api.handleFetch(postRequest('https://example.test/api/ocr', {
+    origin: 'https://example.test',
+    headers: { 'x-forwarded-for': `203.0.113.${50 + index}` }
+  }), BAIDU_ENV)));
+  try {
+    const start = Date.now();
+    while (tokenCalls < 1) {
+      if (Date.now() - start > 1000) throw new Error('token request did not start');
+      await new Promise(resolve => setTimeout(resolve, 5));
+    }
+    await new Promise(resolve => setTimeout(resolve, 30));
+    assert.equal(tokenCalls, 1);
+    release();
+    const responses = await pending;
+    assert.equal(tokenCalls, 1);
+    for (const response of responses) assert.equal(response.status, 200);
+  } finally {
+    release();
+    await pending.catch(() => {});
+    mock.restore();
+  }
+});
+
+test('refreshes an invalid access token once', async () => {
+  const mock = installBaiduFetch({
+    onOcr(_entry, count) {
+      if (count === 1) {
+        return jsonResult(200, { error_code: 110, error_msg: 'Access token invalid or no longer valid' });
+      }
+      return jsonResult(200, { words_result: [{ words: 'apple 苹果' }] });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.14' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.deepEqual(body.items, [{ word: 'apple', meaning: '苹果' }]);
+    assert.doesNotMatch(JSON.stringify(body), /Access token|test-api-key|test-secret-key/);
+  } finally {
+    mock.restore();
+  }
+  assert.equal(mock.calls.filter(call => call.url.includes('/oauth/2.0/token')).length, 2);
+  const tokens = mock.calls
+    .filter(call => call.url.includes('/handwriting'))
+    .map(call => new URL(call.url).searchParams.get('access_token'));
+  assert.deepEqual(tokens, ['tok-1', 'tok-2']);
+});
+
+test('allows the mainland origins configured in wrangler.jsonc', async () => {
+  const wrangler = fs.readFileSync(path.join(__dirname, '..', 'wrangler.jsonc'), 'utf8');
+  const match = wrangler.match(/"OCR_ALLOWED_ORIGINS":\s*"([^"]+)"/);
+  assert.ok(match);
+  const env = { OCR_ALLOWED_ORIGINS: match[1] };
+  const origins = [
+    'https://roubizhao6-sys.github.io',
+    'http://120.77.70.33',
+    'http://tingxieyou.cn',
+    'https://tingxieyou.cn',
+    'http://www.tingxieyou.cn',
+    'https://www.tingxieyou.cn'
+  ];
+  assert.deepEqual(match[1].split(',').map(value => value.trim()), origins);
+  for (const origin of origins) {
+    const response = await api.handleFetch(postRequest('https://ocr.example/', {
+      origin,
+      method: 'OPTIONS'
+    }), env);
+    assert.equal(response.status, 204, origin);
+    assert.equal(response.headers.get('access-control-allow-origin'), origin);
+  }
 });
 
 test('allows GitHub Pages by default and echoes that origin', async () => {
@@ -266,23 +468,119 @@ test('rejects an image larger than the limit', () => {
   assert.throws(() => api.parseDataUrl(image), /2\.7 MB/);
 });
 
-test('upstream Vision errors stay 502 and do not put the key in the URL', async () => {
-  const originalFetch = global.fetch;
-  global.fetch = async () => ({
-    ok: false,
-    status: 403,
-    json: async () => ({ error: { message: 'API key not valid' } })
+test('a still-invalid token becomes a Chinese 502 and hides the Baidu message', async () => {
+  const mock = installBaiduFetch({
+    onOcr() {
+      return jsonResult(200, { error_code: 110, error_msg: 'Access token invalid test-secret-key' });
+    }
   });
   try {
     const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
       origin: 'https://example.test',
-      headers: { 'x-forwarded-for': '198.51.100.20' }
-    }), { GOOGLE_VISION_API_KEY: 'test-only-key' });
+      headers: { 'x-forwarded-for': '203.0.113.15' }
+    }), BAIDU_ENV);
     const body = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(body.error, 'API key not valid');
+    assert.equal(body.error, 'OCR 上游服务失败，访问凭证无效');
+    assert.doesNotMatch(body.error, /test-api-key|test-secret-key|Access token/);
   } finally {
-    global.fetch = originalFetch;
+    mock.restore();
+  }
+  assert.equal(mock.calls.filter(call => call.url.includes('/oauth/2.0/token')).length, 2);
+});
+
+test('token endpoint failures stay Chinese and do not echo the secret', async () => {
+  const mock = installBaiduFetch({
+    onToken() {
+      return jsonResult(401, { error: 'invalid_client', error_description: 'unknown client id test-secret-key' });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.16' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(body.error, 'OCR 上游服务失败，无法获取访问凭证');
+    assert.doesNotMatch(JSON.stringify(body), /test-secret-key|unknown client/);
+  } finally {
+    mock.restore();
+  }
+  assert.equal(mock.calls.some(call => call.url.includes('/handwriting')), false);
+});
+
+test('Baidu image and quota errors use Chinese messages', async () => {
+  const format = installBaiduFetch({
+    onOcr() {
+      return jsonResult(200, { error_code: 216201, error_msg: 'image format error' });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.17' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 400);
+    assert.equal(body.error, '图片格式不受支持，请使用 JPEG 或 PNG');
+    assert.doesNotMatch(body.error, /image format error/);
+  } finally {
+    format.restore();
+  }
+
+  const quota = installBaiduFetch({
+    onOcr() {
+      return jsonResult(200, { error_code: 18, error_msg: 'Open api qps request limit reached' });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.18' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(body.error, 'OCR 调用过于频繁，请稍后再试');
+  } finally {
+    quota.restore();
+  }
+});
+
+test('network failures do not return the token URL or secret', async () => {
+  const mock = installBaiduFetch({
+    onToken() {
+      throw new Error('connect failed client_secret=test-secret-key');
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.19' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 500);
+    assert.equal(body.error, 'OCR 服务暂时不可用');
+    assert.doesNotMatch(body.error, /test-secret-key|client_secret/);
+  } finally {
+    mock.restore();
+  }
+});
+
+test('an empty handwriting result still returns text and items', async () => {
+  const mock = installBaiduFetch({ ocrPayload: { words_result: [], words_result_num: 0 } });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.21' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.provider, 'baidu-ocr');
+    assert.equal(body.text, '');
+    assert.deepEqual(body.items, []);
+  } finally {
+    mock.restore();
   }
 });
 
@@ -303,10 +601,25 @@ test('frontend calls a configurable Worker URL instead of Vercel', () => {
   assert.doesNotMatch(config, /window\.OCR_API_URL\s*=\s*["'][^"']*YOUR_SUBDOMAIN/);
   assert.match(config, /https:\/\/roubizhao6-sys\.github\.io/);
   assert.doesNotMatch(config, /AIza|GOCSPX|ya29\./);
-  assert.match(readme, /wrangler secret put GOOGLE_VISION_API_KEY/);
+  assert.match(readme, /wrangler secret put BAIDU_OCR_API_KEY/);
+  assert.match(readme, /wrangler secret put BAIDU_OCR_SECRET_KEY/);
   assert.match(readme, /wrangler secret put OCR_ALLOWED_ORIGINS/);
   assert.match(readme, /https:\/\/roubizhao6-sys\.github\.io/);
+  assert.match(readme, /http:\/\/120\.77\.70\.33/);
+  assert.match(readme, /https:\/\/tingxieyou\.cn/);
+  assert.match(readme, /https:\/\/www\.tingxieyou\.cn/);
+  assert.match(readme, /ocr\/v1\/handwriting/);
+  assert.doesNotMatch(readme, /GOOGLE_VISION|Cloud Vision|vision\.googleapis/);
   assert.doesNotMatch(readme, /vercel\.app/i);
+  const source = fs.readFileSync(path.join(root, 'src/index.js'), 'utf8');
+  const wrangler = fs.readFileSync(path.join(root, 'wrangler.jsonc'), 'utf8');
+  assert.match(source, /aip\.baidubce\.com\/rest\/2\.0\/ocr\/v1\/handwriting/);
+  assert.match(source, /eng_granularity/);
+  assert.match(source, /extractItems\(rawText\)/);
+  assert.doesNotMatch(source, /GOOGLE_VISION|vision\.googleapis|runVisionOcr/);
+  assert.match(wrangler, /BAIDU_OCR_API_KEY/);
+  assert.match(wrangler, /BAIDU_OCR_SECRET_KEY/);
+  assert.doesNotMatch(wrangler, /GOOGLE_VISION_API_KEY/);
   assert.equal(fs.existsSync(path.join(root, 'vercel.json')), false);
   assert.equal(fs.existsSync(path.join(root, 'api/ocr.js')), false);
 });

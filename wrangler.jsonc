@@ -15,13 +15,15 @@
       "head_sampling_rate": 0.01
     }
   },
-  // Public allowlist. Default is the GitHub Pages origin (no path, no trailing slash).
-  // A comma-separated list is allowed. `wrangler secret put OCR_ALLOWED_ORIGINS`
-  // overrides this var on the deployed Worker.
+  // Public allowlist. No path and no trailing slash. Comma-separated.
+  // GitHub Pages, the mainland site (tingxieyou.cn), and its IP origin.
+  // `wrangler secret put OCR_ALLOWED_ORIGINS` overrides this var on deploy.
   "vars": {
-    "OCR_ALLOWED_ORIGINS": "https://roubizhao6-sys.github.io"
+    "OCR_ALLOWED_ORIGINS": "https://roubizhao6-sys.github.io,http://120.77.70.33,http://tingxieyou.cn,https://tingxieyou.cn,http://www.tingxieyou.cn,https://www.tingxieyou.cn"
   },
+  // Values are set with `wrangler secret put`, never written here.
+  // BAIDU_OCR_API_KEY is the Baidu app API Key; BAIDU_OCR_SECRET_KEY is its Secret Key.
   "secrets": {
-    "required": ["GOOGLE_VISION_API_KEY"]
+    "required": ["BAIDU_OCR_API_KEY", "BAIDU_OCR_SECRET_KEY"]
   }
 }
