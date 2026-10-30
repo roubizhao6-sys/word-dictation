@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "word-dictation-ocr",
+  "main": "src/index.js",
+  // Keep this current when upgrading the Worker runtime.
+  "compatibility_date": "2026-10-30",
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  },
+  // Public allowlist. Default is the GitHub Pages origin (no path, no trailing slash).
+  // A comma-separated list is allowed. `wrangler secret put OCR_ALLOWED_ORIGINS`
+  // overrides this var on the deployed Worker.
+  "vars": {
+    "OCR_ALLOWED_ORIGINS": "https://roubizhao6-sys.github.io"
+  },
+  "secrets": {
+    "required": ["GOOGLE_VISION_API_KEY"]
+  }
+}

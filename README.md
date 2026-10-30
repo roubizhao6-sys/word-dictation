@@ -30,35 +30,45 @@
 - 保存到本机 IndexedDB，并直接参与听写、听选、看词选义、错词本和艾宾浩斯复习
 - 发音继续使用原有美音/英音录音；自建词没有录音时自动回退到系统英语语音
 
-### Vercel 配置
+页面继续放在 GitHub Pages（`https://roubizhao6-sys.github.io/word-dictation/`）。OCR 接口是独立的 Cloudflare Worker（`src/index.js`），不再使用 Vercel。
 
-GitHub Pages 只能托管静态页面，不能运行 `/api/ocr`。请把本仓库导入 Vercel，并将站点部署在 Vercel；静态页面和 `api/ocr.js` 会一起工作。
+浏览器来源（Origin，不含路径）默认允许 `https://roubizhao6-sys.github.io`。这个默认值写在 `wrangler.jsonc` 的 `OCR_ALLOWED_ORIGINS`。需要多个来源时用英文逗号分隔，例如 `https://roubizhao6-sys.github.io,http://localhost:8080`。未设置该变量时，Worker 仍回退到 `https://roubizhao6-sys.github.io`。若设置了变量，则以变量为准，不再自动追加默认来源。与 Worker 自身域名相同的请求也允许。
 
-在 Vercel 项目设置中添加环境变量：
+### 部署 Worker
 
-```text
-GOOGLE_VISION_API_KEY=你的 Google Cloud Vision API Key
+```bash
+npm install
+npx wrangler login
+npx wrangler secret put GOOGLE_VISION_API_KEY
+npx wrangler deploy
 ```
 
-如果继续用 GitHub Pages 托管前端、只把 API 放在 Vercel，还需要把 `index.html` 中的：
+`wrangler secret put` 会提示输入，不要把密钥写在命令参数、`wrangler.jsonc`、`config.js` 或 git 里。也可以从本机环境变量管道传入，避免出现在 shell 历史中：
 
-```html
-<meta name="ocr-endpoint" content="/api/ocr">
+```bash
+printf '%s' "$GOOGLE_VISION_API_KEY" | npx wrangler secret put GOOGLE_VISION_API_KEY
 ```
 
-改成你的 Vercel API 地址，例如：
+允许的跨域来源已经有默认值。只有要改掉 `wrangler.jsonc` 里的列表时，才覆盖：
 
-```html
-<meta name="ocr-endpoint" content="https://your-project.vercel.app/api/ocr">
+```bash
+npx wrangler secret put OCR_ALLOWED_ORIGINS
 ```
 
-同时在 Vercel 添加允许的跨域来源：
+提示时输入逗号分隔的来源，例如 `https://roubizhao6-sys.github.io`。同名 secret 会覆盖配置文件里的 var。本地开发把密钥放在 `.dev.vars`（从 `.dev.vars.example` 复制），该文件已被 git 忽略。
 
-```text
-OCR_ALLOWED_ORIGINS=https://roubizhao6-sys.github.io
+```bash
+cp .dev.vars.example .dev.vars
+npm run dev
 ```
 
-不要把真实密钥写进 `index.html`、JavaScript、README 或提交 `.env`。仓库只保留 `.env.example` 占位符。生产环境建议在 Google Cloud 中限制该 Key 只能调用 Vision API，并在 Vercel 侧配置 WAF/限流。
+部署成功后，Wrangler 会打印 `*.workers.dev` 地址。把该地址填进 `config.js`：
+
+```javascript
+window.OCR_API_URL = "https://word-dictation-ocr.<你的子域>.workers.dev";
+```
+
+然后把 `config.js` 提交并推到 GitHub Pages。`YOUR_SUBDOMAIN` 占位符不会被当作真实地址。
 
 Google Cloud 侧需要：
 
@@ -66,11 +76,13 @@ Google Cloud 侧需要：
 2. 启用 Cloud Vision API
 3. 启用结算
 4. 创建 API Key，并限制为 Cloud Vision API
-5. 将 Key 填入 Vercel 的 `GOOGLE_VISION_API_KEY`
+5. 用 `npx wrangler secret put GOOGLE_VISION_API_KEY` 写入 Worker，不要写进前端
+
+不要把真实密钥写进 `index.html`、`config.js`、README，或提交 `.env` / `.dev.vars`。生产环境建议在 Google Cloud 中限制该 Key 只能调用 Vision API。Worker 按客户端 IP 做每分钟 10 次的隔离区内限流（与原先的无服务器实例内限流相同，不是全局限额），并拒绝超过约 3.8 MB 的请求和超过约 2.7 MB 的图片。
 
 ### 手动测试
 
-1. 用 Vercel 部署预览地址打开站点
+1. 确认 `config.js` 的 `OCR_API_URL` 已是部署后的 Worker 地址，并用 GitHub Pages 打开站点
 2. 进入“生词本”
 3. 点“拍照导入”，上传一张手写英文单词页面
 4. 拖动裁剪框并点“识别选中区域”
