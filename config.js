@@ -2,6 +2,8 @@
 // cannot call /api/ocr. After `npx wrangler deploy`, replace YOUR_SUBDOMAIN
 // with the workers.dev host Wrangler prints.
 //
+// Example placeholder (the page treats it as not configured):
+// https://YOUR_SUBDOMAIN.workers.dev
 // Example: https://word-dictation-ocr.<account>.workers.dev
 //
 // The Worker allows https://roubizhao6-sys.github.io by default

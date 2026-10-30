@@ -85,7 +85,8 @@ test('handler returns 503 when the server key is missing', async () => {
   const response = await api.handleFetch(request, {});
   const body = await response.json();
   assert.equal(response.status, 503);
-  assert.match(body.error, /GOOGLE_VISION_API_KEY/);
+  assert.equal(body.error, 'OCR 服务尚未配置');
+  assert.doesNotMatch(body.error, /GOOGLE_VISION_API_KEY|AIza/);
   assert.equal(response.headers.get('access-control-allow-origin'), 'https://example.test');
   assert.equal(response.headers.get('cache-control'), 'no-store');
 });
@@ -292,7 +293,9 @@ test('frontend calls a configurable Worker URL instead of Vercel', () => {
   const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
   assert.match(html, /src="config\.js"/);
   assert.match(html, /window\.OCR_API_URL/);
-  assert.match(html, /config\.js 的 OCR_API_URL/);
+  assert.match(html, /OCR 服务尚未配置/);
+  assert.match(html, /function ocrUserMessage/);
+  assert.match(html, /sourceIds/);
   assert.doesNotMatch(html, /vercel/i);
   assert.doesNotMatch(html, /\/api\/ocr/);
   assert.match(config, /window\.OCR_API_URL/);

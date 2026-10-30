@@ -274,8 +274,11 @@ async function readJsonBody(request) {
 }
 
 async function runVisionOcr(base64, languageHints, env) {
+  // TODO(baidu-ocr): keep this Google Vision call behind the same { text, items }
+  // result. Mainland product direction is a Baidu OCR adapter; do not remove the
+  // page's photo → review → wordbook flow when that swap happens.
   const apiKey = env && env.GOOGLE_VISION_API_KEY;
-  if (!apiKey) throw httpError(503, 'OCR 服务尚未配置 GOOGLE_VISION_API_KEY');
+  if (!apiKey) throw httpError(503, 'OCR 服务尚未配置');
 
   const response = await fetch('https://vision.googleapis.com/v1/images:annotate', {
     method: 'POST',
