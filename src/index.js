@@ -358,28 +358,48 @@ function baiduCredentials(env) {
   };
 }
 
+function sanitizeBaiduTokenDetail(payload, apiKey, secretKey) {
+  const raw = payload && (payload.error_description || payload.error || payload.error_msg);
+  if (raw == null) return '';
+  let text = String(raw).replace(/[\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const secrets = [apiKey, secretKey].filter(value => value && value.length >= 8);
+  for (const secret of secrets) {
+    text = text.split(secret).join('');
+    const encoded = encodeURIComponent(secret);
+    if (encoded !== secret) text = text.split(encoded).join('');
+  }
+  text = text.replace(/\s+/g, ' ').trim().slice(0, 80);
+  return text;
+}
+
 async function requestBaiduAccessToken(apiKey, secretKey, tag) {
-  // Credentials stay in the POST body. Baidu still requires the resulting
-  // access_token on the OCR URL; the API key and secret never go there.
+  // Baidu documents client_id/client_secret on the token URL query string.
+  // Also send them in the POST body. Follow redirects; Workers sometimes see
+  // a hop that redirect:manual would treat as failure. The API key and secret
+  // still never go on the handwriting URL — only the resulting access_token does.
+  const url = new URL(BAIDU_TOKEN_URL);
+  url.searchParams.set('grant_type', 'client_credentials');
+  url.searchParams.set('client_id', apiKey);
+  url.searchParams.set('client_secret', secretKey);
   const body = new URLSearchParams({
     grant_type: 'client_credentials',
     client_id: apiKey,
     client_secret: secretKey
   });
-  const response = await fetch(BAIDU_TOKEN_URL, {
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
-    redirect: 'manual',
+    redirect: 'follow',
     cache: 'no-store'
   });
-  if (response.status >= 300 && response.status < 400) {
-    throw httpError(502, 'OCR 上游服务失败，无法获取访问凭证');
-  }
   const payload = await response.json().catch(() => null);
   const accessToken = payload && payload.access_token;
   if (!response.ok || typeof accessToken !== 'string' || !accessToken) {
-    throw httpError(502, 'OCR 上游服务失败，无法获取访问凭证');
+    const detail = sanitizeBaiduTokenDetail(payload, apiKey, secretKey);
+    throw httpError(502, detail
+      ? `OCR 上游服务失败，无法获取访问凭证（${detail}）`
+      : 'OCR 上游服务失败，无法获取访问凭证');
   }
 
   const expiresInMs = Number(payload.expires_in) * 1000;
@@ -426,7 +446,7 @@ async function callHandwriting(base64, languageHints, env, allowRefresh) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
-    redirect: 'manual',
+    redirect: 'follow',
     cache: 'no-store'
   });
   if (response.status >= 300 && response.status < 400) {

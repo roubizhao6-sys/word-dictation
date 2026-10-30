@@ -182,17 +182,21 @@ test('handler sends the image to Baidu handwriting and returns structured items'
 
   const tokenCall = mock.calls.find(call => call.url.includes('/oauth/2.0/token'));
   const ocrCall = mock.calls.find(call => call.url.includes('/handwriting'));
-  assert.equal(tokenCall.url, 'https://aip.baidubce.com/oauth/2.0/token');
-  assert.equal(tokenCall.options.redirect, 'manual');
+  const tokenUrl = new URL(tokenCall.url);
+  assert.equal(`${tokenUrl.origin}${tokenUrl.pathname}`, 'https://aip.baidubce.com/oauth/2.0/token');
+  assert.equal(tokenUrl.searchParams.get('grant_type'), 'client_credentials');
+  assert.equal(tokenUrl.searchParams.get('client_id'), 'test-api-key');
+  assert.equal(tokenUrl.searchParams.get('client_secret'), 'test-secret-key');
+  assert.equal(tokenCall.options.redirect, 'follow');
   const tokenForm = postedForm(tokenCall.options);
   assert.equal(tokenForm.get('grant_type'), 'client_credentials');
   assert.equal(tokenForm.get('client_id'), 'test-api-key');
   assert.equal(tokenForm.get('client_secret'), 'test-secret-key');
-  assert.doesNotMatch(tokenCall.url, /test-api-key|test-secret-key/);
 
   const ocrUrl = new URL(ocrCall.url);
   assert.equal(`${ocrUrl.origin}${ocrUrl.pathname}`, 'https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting');
   assert.equal(ocrUrl.searchParams.get('access_token'), 'tok-1');
+  assert.equal(ocrCall.options.redirect, 'follow');
   assert.doesNotMatch(ocrCall.url, /test-api-key|test-secret-key|accurate_basic|vision\.googleapis/);
   const ocrForm = postedForm(ocrCall.options);
   assert.equal(ocrForm.get('image'), 'iVBORw0KGgo=');
@@ -502,12 +506,35 @@ test('token endpoint failures stay Chinese and do not echo the secret', async ()
     }), BAIDU_ENV);
     const body = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(body.error, 'OCR 上游服务失败，无法获取访问凭证');
-    assert.doesNotMatch(JSON.stringify(body), /test-secret-key|unknown client/);
+    assert.equal(body.error, 'OCR 上游服务失败，无法获取访问凭证（unknown client id）');
+    assert.doesNotMatch(JSON.stringify(body), /test-secret-key|test-api-key/);
   } finally {
     mock.restore();
   }
   assert.equal(mock.calls.some(call => call.url.includes('/handwriting')), false);
+});
+
+test('a token error that is only the secret stays generic', async () => {
+  const mock = installBaiduFetch({
+    onToken() {
+      return jsonResult(401, {
+        error: 'invalid_client',
+        error_description: 'test-secret-key'
+      });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.22' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(body.error, 'OCR 上游服务失败，无法获取访问凭证');
+    assert.doesNotMatch(JSON.stringify(body), /test-secret-key|test-api-key|invalid_client/);
+  } finally {
+    mock.restore();
+  }
 });
 
 test('Baidu image and quota errors use Chinese messages', async () => {
