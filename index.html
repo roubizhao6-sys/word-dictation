@@ -15,6 +15,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://roubizhao6-sys.github.io/word-dictation/og-image.png">
+<meta name="ocr-api" content="">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="单词听写">
@@ -45,6 +46,11 @@ body{
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input{font-family:inherit}
 .hide{display:none !important}
+.ocr-preview{display:block;width:100%;max-height:240px;object-fit:contain;background:var(--bg3);border:1px solid var(--line);border-radius:12px;margin:8px 0 12px}
+.ocr-status{font-size:13px;color:var(--tx2);padding:16px 0;text-align:center}
+.ocr-status b{color:var(--orange)}
+.ocr-text{width:100%;min-height:260px;resize:vertical;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--tx);padding:10px;font:13.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;outline:none}
+.ocr-help{font-size:12.5px;color:var(--tx2);line-height:1.7;margin:2px 0 10px}
 .screen{position:fixed;inset:0;overflow:auto;-webkit-overflow-scrolling:touch}
 
 /* ---------- 通用元件 ---------- */
@@ -297,6 +303,7 @@ const WORDS = [{"id":"0001","word":"moisture","unit":1,"pos":"n.","meaning":"潮
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const norm=s=>(s||'').trim().toLowerCase().replace(/\s+/g,' ').replace(/[’`]/g,"'");
 const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const OCR_API_URL=((document.querySelector('meta[name="ocr-api"]')?.content)||'').trim();
 const ICON={
  spk:'<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><path d="M4 9.5v5h3.2L12 18.6V5.4L7.2 9.5H4z"/><path d="M15 8.6a4.6 4.6 0 010 6.8M17.6 6a8.2 8.2 0 010 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
  star:'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3.8l2.4 5.1 5.6.8-4 4 .9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-4 5.6-.8z"/></svg>',
@@ -501,16 +508,91 @@ function renderHome(tab){
   else if(tab==='wrong') renderWrong(body);
   else renderStats(body);
 }
-/* ---------- 我的生词（可添加、可保存、可备份） ---------- */
+/* ---------- 我的生词（IndexedDB 个人词本） ---------- */
 let custom=[];
-function loadCustom(){ try{ custom=JSON.parse(localStorage.getItem(LS+'_custom')||'[]'); }catch(e){ custom=[]; } }
-function saveCustom(){ try{ localStorage.setItem(LS+'_custom',JSON.stringify(custom)); }catch(e){} }
+const WORD_DB_NAME='dictation_personal_words_v1';
+const WORD_DB_STORE='words';
+let wordDBPromise=null;
+
+function openWordDB(){
+  if(!('indexedDB' in window)) return Promise.reject(new Error('当前浏览器不支持 IndexedDB'));
+  if(wordDBPromise) return wordDBPromise;
+  wordDBPromise=new Promise((resolve,reject)=>{
+    const req=indexedDB.open(WORD_DB_NAME,1);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(WORD_DB_STORE)) db.createObjectStore(WORD_DB_STORE,{keyPath:'id'});
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error('无法打开个人词本'));
+  });
+  return wordDBPromise;
+}
+async function idbGetWords(){
+  const db=await openWordDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(WORD_DB_STORE,'readonly');
+    const req=tx.objectStore(WORD_DB_STORE).getAll();
+    req.onsuccess=()=>resolve(req.result||[]);
+    req.onerror=()=>reject(req.error||new Error('读取个人词本失败'));
+  });
+}
+async function idbReplaceWords(list){
+  const db=await openWordDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(WORD_DB_STORE,'readwrite');
+    const store=tx.objectStore(WORD_DB_STORE);
+    store.clear();
+    list.forEach(item=>store.put(item));
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error||new Error('保存个人词本失败'));
+    tx.onabort=()=>reject(tx.error||new Error('保存个人词本已取消'));
+  });
+}
+function normalizeCustomWord(c,index){
+  const now=Date.now();
+  return {
+    id:c.id||`c${now.toString(36)}${index||0}`,
+    word:String(c.word||'').trim(),
+    pos:String(c.pos||'').trim(),
+    meaning:String(c.meaning||'').trim(),
+    ipa_us:String(c.ipa_us||'').trim(),
+    ipa_gb:String(c.ipa_gb||'').trim(),
+    en_def:String(c.en_def||'').trim(),
+    senses:Array.isArray(c.senses)?c.senses:[],
+    hidden:!!c.hidden,
+    source:String(c.source||'manual'),
+    createdAt:Number(c.createdAt)||now
+  };
+}
+async function loadCustom(){
+  try{
+    const stored=await idbGetWords();
+    custom=stored.map(normalizeCustomWord).sort((a,b)=>a.createdAt-b.createdAt);
+    if(custom.length) return;
+    let legacy=[];
+    try{ legacy=JSON.parse(localStorage.getItem(LS+'_custom')||'[]'); }catch(_){ legacy=[]; }
+    if(Array.isArray(legacy)&&legacy.length){
+      custom=legacy.map(normalizeCustomWord);
+      await idbReplaceWords(custom);
+      localStorage.removeItem(LS+'_custom');
+    }
+  }catch(error){
+    console.error('IndexedDB unavailable:',error);
+    try{ custom=JSON.parse(localStorage.getItem(LS+'_custom')||'[]').map(normalizeCustomWord); }catch(_){ custom=[]; }
+  }
+}
+async function saveCustom(){
+  await idbReplaceWords(custom);
+  try{ localStorage.removeItem(LS+'_custom'); }catch(_){}
+}
 function rebuildCustom(){
   for(let i=WORDS.length-1;i>=0;i--){ if(WORDS[i].custom) WORDS.splice(i,1); }
   custom.forEach((c,k)=>WORDS.push({
     id:c.id||('c'+(k+1)), word:c.word, pos:c.pos||'', meaning:c.meaning||'',
     ipa_us:c.ipa_us||'', ipa_gb:c.ipa_gb||'', en_def:c.en_def||'', syn:[], ex:'',
-    unit:99, custom:true, hidden:!!c.hidden
+    senses:(c.senses&&c.senses.length)?c.senses:(c.meaning?[{pos:c.pos||'',text:c.meaning,items:c.meaning.split(/[;；,，]/).filter(Boolean)}]:[]),
+    unit:99, custom:true, hidden:!!c.hidden, source:c.source||'manual'
   }));
 }
 function mineIds(){
@@ -527,67 +609,224 @@ function renderMine(body){
   const ids=mineIds();
   body.innerHTML=`
     <div class="rowset" style="border:none;padding:6px 0 10px">
-      <div><div class="lb">生词本 · ${ids.length} 个词</div>
-        <div class="sub">☆ 收藏的单词 + 你自己添加的单词，都会永久保存在这台电脑上</div></div>
+      <div><div class="lb">个人词本 · ${ids.length} 个词</div>
+        <div class="sub">拍照识别或手动添加的单词保存在本机 IndexedDB 中；收藏词也会出现在这里</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn primary" id="addWordBtn">＋ 添加单词</button>
-        <button class="btn" id="drillMine" ${ids.length?'':'disabled'}>练习本单</button>
+        <button class="btn primary" id="scanWordBtn">📷 拍照识词</button>
+        <button class="btn" id="uploadWordBtn">上传图片</button>
+        <button class="btn" id="addWordBtn">＋ 手动添加</button>
+        <button class="btn" id="drillMine" ${ids.length?'':'disabled'}>开始练习</button>
       </div>
     </div>
+    <input type="file" id="cameraFile" accept="image/*" capture="environment" class="hide">
+    <input type="file" id="uploadFile" accept="image/*" class="hide">
     <div class="wlbar" style="margin:0 0 8px">
       <button class="btn sm" id="expBtn">导出备份</button>
       <button class="btn sm" id="impBtn">导入备份</button>
       <input type="file" id="impFile" accept=".json" class="hide">
-      <span class="sub" id="mineTip" style="margin-left:auto">数据保存在本机浏览器中</span>
+      <span class="sub" id="mineTip" style="margin-left:auto">个人词本：IndexedDB · 本机浏览器</span>
     </div>
     <div id="mineRows"></div>`;
   const paint=()=>{
     const ids2=mineIds();
     $('#mineRows').innerHTML = ids2.length? ids2.map(i=>{
       const w=WORDS[i], p=S.prog[i]||{};
+      const source=w.custom?(w.source==='ocr'?'拍照':'自建'):'收藏';
       return `<div class="wlrow" data-i="${i}" title="点击播放">
-        <span class="wlidx">${w.custom?'＋':''}</span>
+        <span class="wlidx">${w.custom?'＋':'☆'}</span>
         <span><span class="wlw">${esc(w.word)}</span><span class="wlipa">${esc(w.ipa_us||'')}</span></span>
-        <span class="wlmean">${esc(w.pos)} ${esc(w.meaning)}${w.custom?' <span class="pill">自建</span>':''}</span>
+        <span class="wlmean">${esc(w.pos)} ${esc(w.meaning)} <span class="pill">${source}</span></span>
         <span style="display:flex;gap:4px;align-items:center">
           <button class="icobtn" data-star="${i}" style="color:${p.star?'var(--orange)':'var(--tx3)'}">${ICON.starOn}</button>
           ${w.custom?`<button class="icobtn" data-del="${i}" title="移除">${ICON.trash}</button>`:''}
-        </span></div>`;}).join('') : `<div style="text-align:center;color:var(--tx2);padding:50px 0">还没有生词<br><span class="sub">在「单词表」里点 ☆ 收藏，或点上面「＋ 添加单词」</span></div>`;
+        </span></div>`;}).join('') : `<div style="text-align:center;color:var(--tx2);padding:50px 0">还没有生词<br><span class="sub">拍照/上传手写词页，或点「＋ 手动添加」</span></div>`;
     $$('#mineRows .wlrow').forEach(row=>row.onclick=e=>{
       if(e.target.closest('button')) return;
       playAt(+row.dataset.i);
     });
     $$('#mineRows [data-star]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.star,p=P(i); p.star=!p.star; if(p.star&&S.set.autoReviewCollect&&!p.due)p.due=Date.now(); save(); paint(); });
-    $$('#mineRows [data-del]').forEach(b=>b.onclick=()=>{
+    $$('#mineRows [data-del]').forEach(b=>b.onclick=async()=>{
       const i=+b.dataset.del, w=WORDS[i];
-      if(!confirm('从生词本移除「'+w.word+'」？')) return;
-      const k=w.custom?undefined:null;
-      if(w.custom){ const idx=custom.findIndex(c=>c.word===w.word); if(idx>=0){ custom[idx].hidden=true; saveCustom(); rebuildCustom(); } }
-      else { const p=P(i); p.star=false; save(); }
-      paint(); body.querySelector('.lb').textContent='生词本 · '+mineIds().length+' 个词';
+      if(!confirm('从个人词本移除「'+w.word+'」？')) return;
+      if(w.custom){
+        const idx=custom.findIndex(c=>c.id===w.id);
+        if(idx>=0){ custom[idx].hidden=true; await saveCustom(); rebuildCustom(); }
+      } else { const p=P(i); p.star=false; save(); }
+      paint(); body.querySelector('.lb').textContent='个人词本 · '+mineIds().length+' 个词';
     });
   };
   paint();
+  const pickImage=e=>{
+    const file=e.target.files&&e.target.files[0];
+    e.target.value='';
+    if(file) scanImage(file);
+  };
+  $('#scanWordBtn').onclick=()=>$('#cameraFile').click();
+  $('#uploadWordBtn').onclick=()=>$('#uploadFile').click();
+  $('#cameraFile').onchange=pickImage;
+  $('#uploadFile').onchange=pickImage;
   $('#addWordBtn').onclick=openAddWord;
-  $('#drillMine').onclick=()=>{ const ids2=mineIds(); if(ids2.length) startList(ids2,'生词本'); };
+  $('#drillMine').onclick=()=>{ const ids2=mineIds(); if(ids2.length) startList(ids2,'个人词本'); };
   $('#expBtn').onclick=exportAll;
   $('#impBtn').onclick=()=>$('#impFile').click();
   $('#impFile').onchange=e=>{
     const f=e.target.files[0]; if(!f) return;
     const r=new FileReader();
-    r.onload=()=>{ try{ const o=JSON.parse(r.result);
+    r.onload=async()=>{ try{ const o=JSON.parse(r.result);
       if(o.prog) S.prog=o.prog; if(o.hist) S.hist=o.hist; if(o.set) S.set={...S.set,...o.set};
       if(o.wrongSpell) S.wrongSpell=o.wrongSpell; if(o.notes) notes=o.notes;
-      if(o.custom){ custom=o.custom; saveCustom(); rebuildCustom(); saveNotes(); }
+      if(o.custom){ custom=o.custom.map(normalizeCustomWord); await saveCustom(); rebuildCustom(); saveNotes(); }
       save(); alert('导入成功'); renderHome('mine');
-    }catch(err){ alert('文件格式不正确'); } };
+    }catch(err){ alert('文件格式不正确或保存失败'); } };
     r.readAsText(f);
+  };
+}
+function readImageDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result);
+    r.onerror=()=>reject(new Error('读取图片失败'));
+    r.readAsDataURL(file);
+  });
+}
+async function imageForOcr(file){
+  if(!file||!/^image\//.test(file.type||'')) throw new Error('请选择图片文件');
+  const raw=await readImageDataURL(file);
+  if(file.size<1_200_000&&(file.type==='image/jpeg'||file.type==='image/webp')) return raw;
+  const img=await new Promise((resolve,reject)=>{
+    const im=new Image();
+    im.onload=()=>resolve(im);
+    im.onerror=()=>reject(new Error('图片格式无法读取，请改用 JPG/PNG'));
+    im.src=raw;
+  });
+  const maxEdge=1800;
+  const scale=Math.min(1,maxEdge/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round((img.naturalWidth||img.width)*scale));
+  canvas.height=Math.max(1,Math.round((img.naturalHeight||img.height)*scale));
+  canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+  return canvas.toDataURL('image/jpeg',0.84);
+}
+function parseOcrRows(text){
+  return String(text||'').split(/\n/).map(line=>{
+    line=line.trim(); if(!line) return null;
+    const parts=line.split(/\t/);
+    let word=(parts[0]||'').replace(/^\s*\d+[\.、\)]\s*/,'').trim();
+    let pos=(parts[1]||'').trim();
+    let meaning=parts.slice(2).join(' ').trim();
+    if(parts.length===1){
+      const m=line.match(/^([A-Za-z][A-Za-z' .-]*?)\s*[|｜]\s*(.+)$/);
+      if(m){ word=m[1].trim(); meaning=m[2].trim(); }
+    }
+    if(!pos&&meaning){
+      const m=meaning.match(/^((?:n|v|adj|adv|prep|conj|pron|num|phr)\.)\s*(.*)$/i);
+      if(m){ pos=m[1]; meaning=m[2]; }
+    }
+    if(!word||!/^[A-Za-z][A-Za-z' .-]*$/.test(word)) return null;
+    return {word,pos,meaning};
+  }).filter(Boolean);
+}
+async function mergeScannedWords(rows){
+  let added=0,matched=0;
+  const seen=new Set();
+  for(const row of rows){
+    const key=norm(row.word);
+    if(!key||seen.has(key)) continue;
+    seen.add(key);
+    const foundIndex=WORDS.findIndex(w=>norm(w.word)===key);
+    if(foundIndex>=0){
+      const found=WORDS[foundIndex];
+      if(found.custom){
+        const item=custom.find(c=>c.id===found.id);
+        if(item){
+          item.hidden=false;
+          if(row.pos) item.pos=row.pos;
+          if(row.meaning) item.meaning=row.meaning;
+          if(row.meaning&&!item.senses.length) item.senses=[{pos:item.pos||'',text:item.meaning,items:item.meaning.split(/[;；,，]/).filter(Boolean)}];
+        }
+      }else{
+        P(foundIndex).star=true;
+      }
+      matched++;
+    }else{
+      const now=Date.now();
+      custom.push({
+        id:`ocr_${now.toString(36)}_${added}_${Math.random().toString(36).slice(2,6)}`,
+        word:row.word, pos:row.pos||'', meaning:row.meaning||'', ipa_us:'', ipa_gb:'',
+        en_def:'', senses:row.meaning?[{pos:row.pos||'',text:row.meaning,items:row.meaning.split(/[;；,，]/).filter(Boolean)}]:[],
+        hidden:false, source:'ocr', createdAt:now+added
+      });
+      added++;
+    }
+  }
+  await saveCustom();
+  rebuildCustom();
+  save();
+  return {added,matched,total:seen.size};
+}
+async function scanImage(file){
+  const el=mask(`<div class="sh"><h3>拍照识词</h3><button class="icobtn" data-x>✕</button></div>
+    <div class="body">
+      <div class="ocr-status" id="ocrStatus"><b>正在上传并识别手写单词…</b><br>通常需要几秒，图片不会保存在服务器</div>
+      <img class="ocr-preview hide" id="ocrPreview" alt="待识别图片">
+    </div>`);
+  el.querySelector('[data-x]').onclick=()=>el.remove();
+  try{
+    const image=await imageForOcr(file);
+    const preview=el.querySelector('#ocrPreview');
+    preview.src=image; preview.classList.remove('hide');
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),45_000);
+    let response;
+    try{
+      if(!OCR_API_URL) throw new Error('未配置 OCR Worker 地址，请检查 index.html 的 ocr-api meta');
+      response=await fetch(OCR_API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image}),signal:controller.signal});
+    }finally{ clearTimeout(timer); }
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok) throw new Error(data.error||'OCR 服务不可用，请检查 Worker 地址与 CORS 配置');
+    if(!el.isConnected) return;
+    if(!Array.isArray(data.words)||!data.words.length) throw new Error('没有识别到英文单词，请换一张更清晰的照片');
+    el.remove();
+    openOcrReview(data.words,image);
+  }catch(error){
+    if(!el.isConnected) return;
+    const msg=error&&error.name==='AbortError'?'识别超时，请压缩图片后重试':(error&&error.message)||'识别失败';
+    el.querySelector('#ocrStatus').innerHTML=`<b style="color:var(--wrong)">识别失败</b><br>${esc(msg)}`;
+  }
+}
+function openOcrReview(words,image){
+  const initial=words.map(w=>[w.word,w.pos||'',w.meaning||''].join('\t')).join('\n');
+  const el=mask(`<div class="sh"><h3>确认识别结果</h3><button class="icobtn" data-x>✕</button></div>
+    <div class="body">
+      <img class="ocr-preview" id="ocrReviewPreview" alt="手写单词页">
+      <div class="ocr-help">每行一个词：<b>单词 → Tab → 词性（可空）→ Tab → 中文释义</b>。可直接修改、删行或补词。</div>
+      <textarea class="ocr-text" id="ocrText">${esc(initial)}</textarea>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn primary" id="ocrSave">保存到个人词本</button>
+        <button class="btn" data-x>取消</button>
+        <span class="sub" id="ocrCount" style="align-self:center">共 ${words.length} 个候选词</span>
+      </div>
+    </div>`);
+  el.querySelector('#ocrReviewPreview').src=image;
+  el.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>el.remove());
+  el.querySelector('#ocrSave').onclick=async()=>{
+    const rows=parseOcrRows(el.querySelector('#ocrText').value);
+    if(!rows.length){ alert('没有可保存的英文单词'); return; }
+    const btn=el.querySelector('#ocrSave'); btn.disabled=true; btn.textContent='正在保存…';
+    try{
+      const result=await mergeScannedWords(rows);
+      el.remove(); renderHome('mine');
+      showToast(`已保存 ${result.total} 个词（新增 ${result.added}，已存在 ${result.matched}）`);
+    }catch(error){
+      btn.disabled=false; btn.textContent='保存到个人词本';
+      alert('保存失败：'+(error.message||'IndexedDB 不可用'));
+    }
   };
 }
 function openAddWord(){
   const el=mask(`<div class="sh"><h3>添加单词</h3><button class="icobtn" data-x>✕</button></div>
    <div class="body">
-     <div class="sub" style="margin-bottom:10px">保存后永久留在本机；选中行点一下就能发音（系统语音朗读）</div>
+     <div class="sub" style="margin-bottom:10px">保存后永久留在本机 IndexedDB；选中行点一下就能发音（系统语音朗读）</div>
      <div style="display:flex;flex-direction:column;gap:8px">
        <input id="aw_word" type="text" placeholder="单词，例如 abandon">
        <input id="aw_ipa" type="text" placeholder="音标（可留空）">
@@ -597,14 +836,15 @@ function openAddWord(){
      <div style="display:flex;gap:10px;margin-top:14px"><button class="btn primary" id="aw_save">保存</button><button class="btn" data-x>取消</button></div>
    </div>`);
   el.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>el.remove());
-  el.querySelector('#aw_save').onclick=()=>{
+  el.querySelector('#aw_save').onclick=async()=>{
     const bulk=el.querySelector('#aw_bulk').value.trim();
     let added=0;
     const push=(word,ipa,mean)=>{
       word=String(word||'').replace(/^\s*\d+[\.、\)]\s*/,'').trim();
       if(!word) return;
       if(WORDS.some(w=>!w.hidden&&w.word.toLowerCase()===word.toLowerCase())) return;
-      custom.push({id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), word, ipa_us:ipa||'', ipa_gb:ipa||'', pos:'', meaning:mean||'', hidden:false});
+      const now=Date.now();
+      custom.push({id:'c'+now.toString(36)+Math.random().toString(36).slice(2,5), word, ipa_us:ipa||'', ipa_gb:ipa||'', pos:'', meaning:mean||'', senses:[], hidden:false, source:'manual', createdAt:now});
       added++;
     };
     const w=el.querySelector('#aw_word').value;
@@ -618,8 +858,12 @@ function openAddWord(){
       });
     }
     if(!added){ alert('没有可添加的新单词（可能已存在）'); return; }
-    saveCustom(); rebuildCustom(); el.remove(); renderHome('mine');
-    alert('已保存 '+added+' 个单词');
+    try{
+      await saveCustom(); rebuildCustom(); el.remove(); renderHome('mine');
+      alert('已保存 '+added+' 个单词');
+    }catch(error){
+      alert('保存失败：'+(error.message||'IndexedDB 不可用'));
+    }
   };
 }
 function exportAll(){
@@ -1262,9 +1506,9 @@ function onKey(e){
   if(k==='Shift'&&D.phase==='fix'){ D.phase='ask'; D.idx++; nextQuestion(); return; }
 }
 /* ---------- 启动 ---------- */
-function init(){
+async function init(){
   load();
-  loadCustom();
+  await loadCustom();
   rebuildCustom();
   applyTheme();
   try{ notes=JSON.parse(localStorage.getItem(LS+'_notes')||'{}'); }catch(e){ notes={}; }

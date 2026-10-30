@@ -1,0 +1,7 @@
+name = "word-dictation-ocr"
+main = "worker/ocr.js"
+compatibility_date = "2026-10-30"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://roubizhao6-sys.github.io"
