@@ -53,10 +53,32 @@ function normalizeText(value, maxLength = 200) {
     .slice(0, maxLength);
 }
 
+function foldFullwidth(value) {
+  return String(value || '')
+    .replace(/[\uFF01-\uFF5E]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    .replace(/\u3000/g, ' ');
+}
+
 function stripListMarker(line) {
   return normalizeText(line, 500)
-    .replace(/^[•·*\-–—]+\s*/, '')
-    .replace(/^\d{1,3}\s*[.)、:：\-]\s*/, '');
+    .replace(/^[•·*\-–—.|｜]+\s*/, '')
+    .replace(/^[（(]?\d{1,3}[）)]\s*/, '')
+    .replace(/^\d{1,3}\s*[.)、:：\-]\s*/, '')
+    .replace(/^\d{1,3}\s+(?=[A-Za-z])/, '');
+}
+
+function repairOcrToken(token) {
+  if (!/[A-Za-z]/.test(token) || !/[01]/.test(token)) return token;
+  const letters = token.replace(/[^A-Za-z]/g, '');
+  if (letters.length < 2) return token;
+  const swapped = token.replace(/[^01]/g, '').length;
+  if (swapped > letters.length) return token;
+  const upper = letters === letters.toUpperCase();
+  return token.replace(/0/g, upper ? 'O' : 'o').replace(/1/g, upper ? 'L' : 'l');
+}
+
+function repairOcrLine(line) {
+  return line.replace(/[A-Za-z0-9'’\-]+/g, repairOcrToken);
 }
 
 function normalizeEnglish(english, meaning) {
@@ -83,9 +105,9 @@ function normalizeEnglish(english, meaning) {
 }
 
 function extractItems(ocrText) {
-  const lines = String(ocrText || '')
+  const lines = foldFullwidth(ocrText)
     .split(/\r?\n/)
-    .map(stripListMarker)
+    .map(line => repairOcrLine(stripListMarker(line)))
     .filter(Boolean);
 
   const items = [];
@@ -364,18 +386,68 @@ function ocrTarget(languageHints, env) {
   };
 }
 
+function medianNumber(values) {
+  const nums = values.filter(value => Number.isFinite(value) && value > 0).sort((a, b) => a - b);
+  if (!nums.length) return 0;
+  const mid = Math.floor(nums.length / 2);
+  return nums.length % 2 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+}
+
 function wordsResultText(payload) {
   const rows = Array.isArray(payload && payload.words_result) ? payload.words_result : [];
   const lines = rows.map(row => ({
     words: String(row && row.words || '').trim(),
     top: Number(row && row.location && row.location.top),
-    left: Number(row && row.location && row.location.left)
+    left: Number(row && row.location && row.location.left),
+    width: Number(row && row.location && row.location.width) || 0,
+    height: Number(row && row.location && row.location.height) || 0
   })).filter(row => row.words);
-  const positioned = lines.every(row => Number.isFinite(row.top) && Number.isFinite(row.left));
-  if (positioned && lines.length > 1) {
-    lines.sort((a, b) => (a.top - b.top) || (a.left - b.left));
+  const positioned = lines.length > 1 && lines.every(row => Number.isFinite(row.top) && Number.isFinite(row.left));
+  if (!positioned) return lines.map(row => row.words).join('\n');
+
+  const rowThreshold = Math.max(8, medianNumber(lines.map(row => row.height)) * 0.65 || 12);
+  const sorted = lines.slice().sort((a, b) => (a.top - b.top) || (a.left - b.left));
+  const bands = [];
+  for (const line of sorted) {
+    const band = bands[bands.length - 1];
+    const anchor = band
+      ? band.items.reduce((sum, item) => sum + item.top, 0) / band.items.length
+      : 0;
+    if (band && Math.abs(line.top - anchor) <= rowThreshold) band.items.push(line);
+    else bands.push({ items: [line] });
   }
-  return lines.map(row => row.words).join('\n');
+  for (const band of bands) band.items.sort((a, b) => a.left - b.left);
+
+  const measured = lines.every(row => row.width > 0);
+  const gapThreshold = Math.max(36, (medianNumber(lines.map(row => row.width)) || 40) * 1.6);
+  const segmented = bands.map(band => {
+    if (!measured || band.items.length < 2) return [band.items];
+    const parts = [];
+    let current = [band.items[0]];
+    for (let index = 1; index < band.items.length; index += 1) {
+      const prev = band.items[index - 1];
+      const gap = band.items[index].left - (prev.left + prev.width);
+      if (gap > gapThreshold) {
+        parts.push(current);
+        current = [band.items[index]];
+      } else current.push(band.items[index]);
+    }
+    parts.push(current);
+    return parts;
+  });
+  const multiRows = segmented.filter(parts => parts.length >= 2).length;
+  const columnCount = Math.max(...segmented.map(parts => parts.length));
+  if (!(measured && columnCount >= 2 && multiRows >= Math.ceil(segmented.length * 0.6))) {
+    return segmented.map(parts => parts.flat().map(item => item.words).join(' ')).join('\n');
+  }
+
+  const columns = Array.from({ length: columnCount }, () => []);
+  for (const parts of segmented) {
+    parts.forEach((part, index) => {
+      columns[index].push(part.map(item => item.words).join(' '));
+    });
+  }
+  return columns.flat().join('\n');
 }
 
 async function credentialTag(apiKey, secretKey) {
@@ -592,6 +664,7 @@ export {
   normalizeEnglish,
   parseDataUrl,
   stripListMarker,
+  wordsResultText,
   handleFetch,
   resetRateLimits,
   base64DecodedByteLength

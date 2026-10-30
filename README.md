@@ -54,7 +54,7 @@ python3 scripts/build-empty-site.py
 
 浏览器来源（Origin，不含路径）写在 `wrangler.jsonc` 的 `OCR_ALLOWED_ORIGINS`：`https://roubizhao6-sys.github.io`、`http://120.77.70.33`、`http://tingxieyou.cn`、`https://tingxieyou.cn`、`http://www.tingxieyou.cn`、`https://www.tingxieyou.cn`。需要增减时改这一条逗号分隔列表。未设置该变量时，Worker 仍回退到 `https://roubizhao6-sys.github.io`。若设置了变量，则以变量为准，不再自动追加默认来源。与 Worker 自身域名相同的请求也允许。
 
-识别默认走百度「通用文字识别（高精度含位置版）」：`https://aip.baidubce.com/rest/2.0/ocr/v1/accurate`。这个接口有免费测试额度（个人认证 500 次/月，企业认证 1,000 次/月），并返回每一行的位置，用来按从上到下排序。语言是中英混合（`language_type=CHN_ENG`）；页面只选英文时用 `ENG`。按行识别（`recognize_granularity=big`），不把英文拆成单字，并检测照片朝向。
+识别默认走百度「通用文字识别（高精度含位置版）」：`https://aip.baidubce.com/rest/2.0/ocr/v1/accurate`。这个接口有免费测试额度（个人认证 500 次/月，企业认证 1,000 次/月），并返回每一行的位置，用来按从上到下、从左到右排，同一行的英文和中文会拼在一起；左右两栏分得开时按栏阅读。语言是中英混合（`language_type=CHN_ENG`）；页面只选英文时用 `ENG`。按行识别（`recognize_granularity=big`），不把英文拆成单字，并检测照片朝向。上传前页面会按照片方向转正，并把选区缩到长边 1800 像素以内的 JPEG。
 
 手写文字识别（`/rest/2.0/ocr/v1/handwriting`）不是默认。当前应用没有勾选这项时，百度会返回未开通。只有在 Worker 上把 `BAIDU_OCR_HANDWRITING` 设为 `true`（或 `1` / `yes` / `on`）之后，才会改调手写接口，并带 `eng_granularity=word`。不设或设为其他值时仍走高精度含位置版。
 

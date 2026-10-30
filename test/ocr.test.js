@@ -51,6 +51,41 @@ test('keeps English-only words and strips list numbering', () => {
   ]);
 });
 
+test('repairs common OCR letter/digit swaps and fullwidth text', () => {
+  assert.deepEqual(api.extractItems('1 app1e 苹果\nl00k after 照顾\nAPP1E 苹果'), [
+    { word: 'apple', meaning: '苹果' },
+    { word: 'look after', meaning: '照顾' }
+  ]);
+  assert.deepEqual(api.extractItems('ａｐｐｌｅ　苹果'), [
+    { word: 'apple', meaning: '苹果' }
+  ]);
+  assert.deepEqual(api.extractItems('CO2'), []);
+});
+
+test('groups Baidu boxes on one row and reads clear columns separately', () => {
+  const sameRow = api.wordsResultText({
+    words_result: [
+      { words: '苹果', location: { top: 12, left: 80, width: 36, height: 18 } },
+      { words: 'apple', location: { top: 10, left: 8, width: 48, height: 18 } }
+    ]
+  });
+  assert.equal(sameRow, 'apple 苹果');
+  assert.deepEqual(api.extractItems(sameRow), [{ word: 'apple', meaning: '苹果' }]);
+
+  const columns = api.wordsResultText({
+    words_result: [
+      { words: 'banana', location: { top: 10, left: 220, width: 60, height: 18 } },
+      { words: 'apple', location: { top: 10, left: 8, width: 48, height: 18 } },
+      { words: '香蕉', location: { top: 40, left: 220, width: 36, height: 18 } },
+      { words: '苹果', location: { top: 42, left: 8, width: 36, height: 18 } }
+    ]
+  });
+  assert.deepEqual(api.extractItems(columns), [
+    { word: 'apple', meaning: '苹果' },
+    { word: 'banana', meaning: '香蕉' }
+  ]);
+});
+
 test('rejects non-image data URLs', () => {
   assert.throws(() => api.parseDataUrl('data:text/plain;base64,SGVsbG8='), /JPEG/);
 });
@@ -687,6 +722,14 @@ test('frontend calls a configurable Worker URL instead of Vercel', () => {
   assert.match(html, /window\.OCR_API_URL/);
   assert.match(html, /OCR 服务尚未配置/);
   assert.match(html, /function ocrUserMessage/);
+  assert.match(html, /尚未开通高精度/);
+  assert.match(html, /光线亮一些/);
+  assert.match(html, /createImageBitmap/);
+  const blank = fs.readFileSync(path.join(root, 'empty/index.html'), 'utf8');
+  assert.match(blank, /function ocrUserMessage/);
+  assert.match(blank, /尚未开通高精度/);
+  assert.match(blank, /光线亮一些/);
+  assert.match(blank, /src="\.\.\/config\.js"/);
   assert.match(html, /sourceIds/);
   assert.doesNotMatch(html, /vercel/i);
   assert.doesNotMatch(html, /\/api\/ocr/);
