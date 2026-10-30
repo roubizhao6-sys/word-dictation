@@ -1,11 +1,18 @@
 {
   "name": "word-dictation",
   "private": true,
+  "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "cf-typegen": "wrangler types --include-runtime false"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "wrangler": "^4.156.0"
   }
 }

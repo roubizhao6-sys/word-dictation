@@ -1,0 +1,3 @@
+# Local only. Copy to .dev.vars and do not commit that file.
+# Production: npx wrangler secret put GOOGLE_VISION_API_KEY
+GOOGLE_VISION_API_KEY=replace-with-server-side-api-key
