@@ -45,7 +45,7 @@ python3 scripts/build-empty-site.py
 
 - 手机拍照或从相册/文件上传
 - 拖动裁剪框选择识别区域
-- 服务端百度手写文字识别（中英文单词本照片）
+- 服务端百度通用文字识别（高精度含位置版，中英文单词本照片）
 - 英文单词和中文释义结果逐条编辑、确认
 - 保存到本机 IndexedDB，并直接参与听写、听选、看词选义、错词本和艾宾浩斯复习
 - 发音继续使用原有美音/英音录音；自建词没有录音时自动回退到系统英语语音
@@ -54,11 +54,13 @@ python3 scripts/build-empty-site.py
 
 浏览器来源（Origin，不含路径）写在 `wrangler.jsonc` 的 `OCR_ALLOWED_ORIGINS`：`https://roubizhao6-sys.github.io`、`http://120.77.70.33`、`http://tingxieyou.cn`、`https://tingxieyou.cn`、`http://www.tingxieyou.cn`、`https://www.tingxieyou.cn`。需要增减时改这一条逗号分隔列表。未设置该变量时，Worker 仍回退到 `https://roubizhao6-sys.github.io`。若设置了变量，则以变量为准，不再自动追加默认来源。与 Worker 自身域名相同的请求也允许。
 
-识别走百度「手写文字识别」：`https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting`。单词本是手写中文和英文，这个接口比通用高精度版（`accurate_basic`，面向印刷体）合适。请求里英文按整词输出（`eng_granularity=word`），并检测照片朝向。接口默认会把英文拆成字母，那样后面的单词解析会失败。
+识别默认走百度「通用文字识别（高精度含位置版）」：`https://aip.baidubce.com/rest/2.0/ocr/v1/accurate`。这个接口有免费测试额度（个人认证 500 次/月，企业认证 1,000 次/月），并返回每一行的位置，用来按从上到下排序。语言是中英混合（`language_type=CHN_ENG`）；页面只选英文时用 `ENG`。按行识别（`recognize_granularity=big`），不把英文拆成单字，并检测照片朝向。
+
+手写文字识别（`/rest/2.0/ocr/v1/handwriting`）不是默认。当前应用没有勾选这项时，百度会返回未开通。只有在 Worker 上把 `BAIDU_OCR_HANDWRITING` 设为 `true`（或 `1` / `yes` / `on`）之后，才会改调手写接口，并带 `eng_granularity=word`。不设或设为其他值时仍走高精度含位置版。
 
 ### 部署 Worker
 
-先在百度智能云文字识别里创建应用，勾选「手写文字识别」，拿到 API Key 和 Secret Key。然后：
+先在百度智能云文字识别里创建应用，勾选「通用文字识别（高精度含位置版）」，拿到 API Key 和 Secret Key。然后：
 
 ```bash
 npm install
@@ -100,12 +102,14 @@ window.OCR_API_URL = "https://word-dictation-ocr.<你的子域>.workers.dev";
 
 百度侧需要：
 
-1. 登录百度智能云，打开文字识别
-2. 创建应用，勾选「手写文字识别」（只开通通用文字识别不够）
+1. 登录 [百度智能云控制台](https://console.bce.baidu.com/)，打开「产品服务 → 人工智能 → 文字识别」（[文字识别控制台](https://console.bce.baidu.com/ai/#/ai/ocr/overview/index)）
+2. 左侧「应用列表」→「创建应用」。在「服务接口列表」勾选「通用文字识别（高精度含位置版）」，点「立即创建」
 3. 复制该应用的 API Key 和 Secret Key
 4. 用上面的 `wrangler secret put` 写入 Worker，不要写进前端
 
-不要把真实密钥写进 `index.html`、`config.js`、README，或提交 `.env` / `.dev.vars`。Worker 按客户端 IP 做每分钟 10 次的隔离区内限流（与原先的无服务器实例内限流相同，不是全局限额），并拒绝超过约 3.8 MB 的请求和超过约 2.7 MB 的图片。页面裁剪后上传的是 JPEG。百度手写接口接受 JPEG、PNG、BMP。
+以后若要改回手写识别：同一页「创建应用」（已有应用若不能改接口列表，就新建一个）时，在「服务接口列表」勾选「手写文字识别」，用新应用的 API Key / Secret Key 覆盖 Worker 密钥，再执行 `npx wrangler secret put BAIDU_OCR_HANDWRITING`，输入 `true`。实名认证后，免费额度会在进入文字识别控制台后发放，左侧「资源列表」可查看。
+
+不要把真实密钥写进 `index.html`、`config.js`、README，或提交 `.env` / `.dev.vars`。Worker 按客户端 IP 做每分钟 10 次的隔离区内限流（与原先的无服务器实例内限流相同，不是全局限额），并拒绝超过约 3.8 MB 的请求和超过约 2.7 MB 的图片。页面裁剪后上传的是 JPEG。高精度含位置版接受 JPEG、PNG、BMP。
 
 ### 手动测试
 

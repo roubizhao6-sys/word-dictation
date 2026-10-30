@@ -14,11 +14,13 @@ const DEFAULT_ALLOWED_ORIGINS = 'https://roubizhao6-sys.github.io';
 const ALLOWED_IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const ALLOWED_LANGUAGES = new Set(['en', 'zh-Hans', 'zh-Hant']);
 const BAIDU_TOKEN_URL = 'https://aip.baidubce.com/oauth/2.0/token';
-// Notebook photos are handwritten Chinese plus English. Baidu's handwriting
-// endpoint is built for that; accurate_basic targets printed text. The
-// handwriting API splits English into letters unless eng_granularity=word,
-// which would break word-pair parsing.
+// Default is 通用文字识别（高精度含位置版）. It has a free monthly quota and
+// returns line locations, which we use to order notebook lines. Handwriting
+// stays available only when BAIDU_OCR_HANDWRITING is enabled, because that
+// API must be checked on the Baidu app or it returns error 6 / 216102.
+// https://cloud.baidu.com/doc/OCR/s/tk3h7y2aq
 // https://cloud.baidu.com/doc/OCR/s/hk3h7y2qq
+const BAIDU_ACCURATE_URL = 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate';
 const BAIDU_HANDWRITING_URL = 'https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting';
 const TOKEN_SKEW_MS = 5 * 60 * 1000;
 
@@ -316,20 +318,53 @@ function isBaiduTokenError(payload) {
   return code === 100 || code === 110 || code === 111;
 }
 
-function baiduOcrError(payload, httpStatus) {
+function baiduOcrError(payload, httpStatus, notEnabledMessage) {
   const code = Number(payload && payload.error_code);
   if (code === 216201) return httpError(400, '图片格式不受支持，请使用 JPEG 或 PNG', code);
   if (code === 216202) return httpError(400, '图片过大或分辨率过高，请重新裁剪后再试', code);
   if (code === 216200) return httpError(400, '图片内容为空', code);
   if (code === 17 || code === 19) return httpError(502, 'OCR 调用次数已达上限，请稍后再试', code);
   if (code === 4 || code === 18) return httpError(502, 'OCR 调用过于频繁，请稍后再试', code);
-  if (code === 6 || code === 216102) return httpError(502, 'OCR 服务尚未开通手写识别', code);
+  if (code === 6 || code === 216102) {
+    return httpError(502, notEnabledMessage || 'OCR 服务尚未开通', code);
+  }
   if (code === 100 || code === 110 || code === 111) return httpError(502, 'OCR 上游服务失败，访问凭证无效', code);
   if (code) return httpError(502, `OCR 上游服务失败（${code}）`, code);
   return httpError(502, `OCR 上游服务失败（${httpStatus || 502}）`);
 }
 
-function handwritingText(payload) {
+function handwritingEnabled(env) {
+  const flag = String(env && env.BAIDU_OCR_HANDWRITING || '').trim().toLowerCase();
+  return flag === '1' || flag === 'true' || flag === 'yes' || flag === 'on';
+}
+
+function ocrTarget(languageHints, env) {
+  const languageType = baiduLanguageType(languageHints);
+  if (handwritingEnabled(env)) {
+    return {
+      endpoint: BAIDU_HANDWRITING_URL,
+      fields: {
+        eng_granularity: 'word',
+        detect_direction: 'true',
+        language_type: languageType
+      },
+      notEnabled: 'OCR 服务尚未开通手写识别'
+    };
+  }
+  // recognize_granularity=big keeps each line whole. small would return
+  // characters, and eng_granularity only applies in that mode.
+  return {
+    endpoint: BAIDU_ACCURATE_URL,
+    fields: {
+      recognize_granularity: 'big',
+      detect_direction: 'true',
+      language_type: languageType
+    },
+    notEnabled: 'OCR 服务尚未开通高精度文字识别'
+  };
+}
+
+function wordsResultText(payload) {
   const rows = Array.isArray(payload && payload.words_result) ? payload.words_result : [];
   const lines = rows.map(row => ({
     words: String(row && row.words || '').trim(),
@@ -376,7 +411,7 @@ async function requestBaiduAccessToken(apiKey, secretKey, tag) {
   // Baidu documents client_id/client_secret on the token URL query string.
   // Also send them in the POST body. Follow redirects; Workers sometimes see
   // a hop that redirect:manual would treat as failure. The API key and secret
-  // still never go on the handwriting URL — only the resulting access_token does.
+  // still never go on the OCR URL — only the resulting access_token does.
   const url = new URL(BAIDU_TOKEN_URL);
   url.searchParams.set('grant_type', 'client_credentials');
   url.searchParams.set('client_id', apiKey);
@@ -432,15 +467,14 @@ function getBaiduAccessToken(env) {
   return run;
 }
 
-async function callHandwriting(base64, languageHints, env, allowRefresh) {
+async function callBaiduOcr(base64, languageHints, env, allowRefresh) {
   const accessToken = await getBaiduAccessToken(env);
-  const url = new URL(BAIDU_HANDWRITING_URL);
+  const target = ocrTarget(languageHints, env);
+  const url = new URL(target.endpoint);
   url.searchParams.set('access_token', accessToken);
   const body = new URLSearchParams({
     image: base64,
-    eng_granularity: 'word',
-    detect_direction: 'true',
-    language_type: baiduLanguageType(languageHints)
+    ...target.fields
   });
   const response = await fetch(url, {
     method: 'POST',
@@ -455,17 +489,17 @@ async function callHandwriting(base64, languageHints, env, allowRefresh) {
   const payload = await response.json().catch(() => null);
   if (allowRefresh && isBaiduTokenError(payload)) {
     invalidateBaiduToken();
-    return callHandwriting(base64, languageHints, env, false);
+    return callBaiduOcr(base64, languageHints, env, false);
   }
   if (!response.ok || !payload || payload.error_code) {
-    throw baiduOcrError(payload, response.status);
+    throw baiduOcrError(payload, response.status, target.notEnabled);
   }
   return payload;
 }
 
 async function runBaiduOcr(base64, languageHints, env) {
-  const payload = await callHandwriting(base64, languageHints, env, true);
-  const rawText = handwritingText(payload);
+  const payload = await callBaiduOcr(base64, languageHints, env, true);
+  const rawText = wordsResultText(payload);
   return {
     text: normalizeText(rawText, 50000),
     items: extractItems(rawText)

@@ -154,7 +154,11 @@ test('either missing Baidu secret is not configured, and a Google key is ignored
   }
 });
 
-test('handler sends the image to Baidu handwriting and returns structured items', async () => {
+function ocrCalls(calls) {
+  return calls.filter(call => call.url.includes('/rest/2.0/ocr/'));
+}
+
+test('handler sends the image to Baidu accurate OCR and returns structured items', async () => {
   const mock = installBaiduFetch();
   const request = postRequest('https://example.test/api/ocr', {
     origin: 'https://example.test',
@@ -181,7 +185,7 @@ test('handler sends the image to Baidu handwriting and returns structured items'
   }
 
   const tokenCall = mock.calls.find(call => call.url.includes('/oauth/2.0/token'));
-  const ocrCall = mock.calls.find(call => call.url.includes('/handwriting'));
+  const ocrCall = ocrCalls(mock.calls)[0];
   const tokenUrl = new URL(tokenCall.url);
   assert.equal(`${tokenUrl.origin}${tokenUrl.pathname}`, 'https://aip.baidubce.com/oauth/2.0/token');
   assert.equal(tokenUrl.searchParams.get('grant_type'), 'client_credentials');
@@ -194,16 +198,41 @@ test('handler sends the image to Baidu handwriting and returns structured items'
   assert.equal(tokenForm.get('client_secret'), 'test-secret-key');
 
   const ocrUrl = new URL(ocrCall.url);
-  assert.equal(`${ocrUrl.origin}${ocrUrl.pathname}`, 'https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting');
+  assert.equal(`${ocrUrl.origin}${ocrUrl.pathname}`, 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate');
   assert.equal(ocrUrl.searchParams.get('access_token'), 'tok-1');
   assert.equal(ocrCall.options.redirect, 'follow');
-  assert.doesNotMatch(ocrCall.url, /test-api-key|test-secret-key|accurate_basic|vision\.googleapis/);
+  assert.doesNotMatch(ocrCall.url, /test-api-key|test-secret-key|handwriting|accurate_basic|vision\.googleapis/);
   const ocrForm = postedForm(ocrCall.options);
   assert.equal(ocrForm.get('image'), 'iVBORw0KGgo=');
-  assert.equal(ocrForm.get('eng_granularity'), 'word');
+  assert.equal(ocrForm.get('recognize_granularity'), 'big');
+  assert.equal(ocrForm.get('eng_granularity'), null);
   assert.equal(ocrForm.get('detect_direction'), 'true');
   assert.equal(ocrForm.get('language_type'), 'CHN_ENG');
   assert.equal(mock.calls.length, 2);
+});
+
+test('BAIDU_OCR_HANDWRITING switches the call to handwriting with whole-word English', async () => {
+  const mock = installBaiduFetch();
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.30' }
+    }), { ...BAIDU_ENV, BAIDU_OCR_HANDWRITING: ' true ' });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.provider, 'baidu-ocr');
+  } finally {
+    mock.restore();
+  }
+  const ocrCall = ocrCalls(mock.calls)[0];
+  const ocrUrl = new URL(ocrCall.url);
+  assert.equal(`${ocrUrl.origin}${ocrUrl.pathname}`, 'https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting');
+  const ocrForm = postedForm(ocrCall.options);
+  assert.equal(ocrForm.get('eng_granularity'), 'word');
+  assert.equal(ocrForm.get('detect_direction'), 'true');
+  assert.equal(ocrForm.get('language_type'), 'CHN_ENG');
+  assert.equal(ocrForm.get('recognize_granularity'), null);
+  assert.doesNotMatch(ocrCall.url, /test-api-key|test-secret-key/);
 });
 
 test('english-only language hints select ENG', async () => {
@@ -220,8 +249,9 @@ test('english-only language hints select ENG', async () => {
   } finally {
     mock.restore();
   }
-  const ocrCall = mock.calls.find(call => call.url.includes('/handwriting'));
+  const ocrCall = ocrCalls(mock.calls)[0];
   assert.equal(postedForm(ocrCall.options).get('language_type'), 'ENG');
+  assert.equal(new URL(ocrCall.url).pathname, '/rest/2.0/ocr/v1/accurate');
 });
 
 test('reuses a cached Baidu access token until it is near expiry', async () => {
@@ -238,7 +268,7 @@ test('reuses a cached Baidu access token until it is near expiry', async () => {
     mock.restore();
   }
   assert.equal(mock.calls.filter(call => call.url.includes('/oauth/2.0/token')).length, 1);
-  assert.equal(mock.calls.filter(call => call.url.includes('/handwriting')).length, 2);
+  assert.equal(ocrCalls(mock.calls).length, 2);
 });
 
 test('does not cache an access token that is already inside the refresh window', async () => {
@@ -315,8 +345,7 @@ test('refreshes an invalid access token once', async () => {
     mock.restore();
   }
   assert.equal(mock.calls.filter(call => call.url.includes('/oauth/2.0/token')).length, 2);
-  const tokens = mock.calls
-    .filter(call => call.url.includes('/handwriting'))
+  const tokens = ocrCalls(mock.calls)
     .map(call => new URL(call.url).searchParams.get('access_token'));
   assert.deepEqual(tokens, ['tok-1', 'tok-2']);
 });
@@ -511,7 +540,7 @@ test('token endpoint failures stay Chinese and do not echo the secret', async ()
   } finally {
     mock.restore();
   }
-  assert.equal(mock.calls.some(call => call.url.includes('/handwriting')), false);
+  assert.equal(ocrCalls(mock.calls).length, 0);
 });
 
 test('a token error that is only the secret stays generic', async () => {
@@ -594,7 +623,45 @@ test('network failures do not return the token URL or secret', async () => {
   }
 });
 
-test('an empty handwriting result still returns text and items', async () => {
+test('an unopened accurate API names that service, and handwriting keeps its own message', async () => {
+  const accurate = installBaiduFetch({
+    onOcr() {
+      return jsonResult(200, { error_code: 6, error_msg: 'No permission to access data' });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.31' }
+    }), BAIDU_ENV);
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(body.error, 'OCR 服务尚未开通高精度文字识别');
+    assert.doesNotMatch(body.error, /No permission|手写/);
+  } finally {
+    accurate.restore();
+  }
+
+  const handwriting = installBaiduFetch({
+    onOcr() {
+      return jsonResult(200, { error_code: 216102, error_msg: 'service not opened' });
+    }
+  });
+  try {
+    const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
+      origin: 'https://example.test',
+      headers: { 'x-forwarded-for': '203.0.113.32' }
+    }), { ...BAIDU_ENV, BAIDU_OCR_HANDWRITING: '1' });
+    const body = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(body.error, 'OCR 服务尚未开通手写识别');
+    assert.doesNotMatch(body.error, /service not opened/);
+  } finally {
+    handwriting.restore();
+  }
+});
+
+test('an empty OCR result still returns text and items', async () => {
   const mock = installBaiduFetch({ ocrPayload: { words_result: [], words_result_num: 0 } });
   try {
     const response = await api.handleFetch(postRequest('https://example.test/api/ocr', {
@@ -635,13 +702,17 @@ test('frontend calls a configurable Worker URL instead of Vercel', () => {
   assert.match(readme, /http:\/\/120\.77\.70\.33/);
   assert.match(readme, /https:\/\/tingxieyou\.cn/);
   assert.match(readme, /https:\/\/www\.tingxieyou\.cn/);
-  assert.match(readme, /ocr\/v1\/handwriting/);
+  assert.match(readme, /ocr\/v1\/accurate/);
+  assert.match(readme, /BAIDU_OCR_HANDWRITING/);
   assert.doesNotMatch(readme, /GOOGLE_VISION|Cloud Vision|vision\.googleapis/);
   assert.doesNotMatch(readme, /vercel\.app/i);
   const source = fs.readFileSync(path.join(root, 'src/index.js'), 'utf8');
   const wrangler = fs.readFileSync(path.join(root, 'wrangler.jsonc'), 'utf8');
+  assert.match(source, /aip\.baidubce\.com\/rest\/2\.0\/ocr\/v1\/accurate/);
   assert.match(source, /aip\.baidubce\.com\/rest\/2\.0\/ocr\/v1\/handwriting/);
   assert.match(source, /eng_granularity/);
+  assert.match(source, /BAIDU_OCR_HANDWRITING/);
+  assert.doesNotMatch(source, /accurate_basic/);
   assert.match(source, /extractItems\(rawText\)/);
   assert.doesNotMatch(source, /GOOGLE_VISION|vision\.googleapis|runVisionOcr/);
   assert.match(wrangler, /BAIDU_OCR_API_KEY/);
